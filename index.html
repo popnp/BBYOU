@@ -533,7 +533,7 @@
        the week's dates stopped lining up with each other. */
     display:flex; flex-direction:column;
     align-items:flex-start; justify-content:flex-start;
-    min-height:62px;
+    min-height:93px;
     border:none; border-radius:0;
     padding:4px 5px;
     background:transparent;
@@ -598,8 +598,11 @@
 
   /* ---- the eighth column: the week's 쀼톡 ---- */
   .cal-week{
-    min-height:62px; padding:2px 0;
-    display:flex; align-items:center; justify-content:center;
+    /* Lined up with the dates rather than floating in the middle of the row.
+       At 62px the difference hardly showed; at 93px the mark sat low enough
+       to read as belonging to the week below it. */
+    min-height:93px; padding:4px 0 0;
+    display:flex; align-items:flex-start; justify-content:center;
     background:transparent; border:none; border-radius:0;
     color:var(--text-muted); cursor:pointer;
   }
@@ -848,7 +851,7 @@ if('serviceWorker' in navigator){
     </div>
   </div></div>
 
-  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-26i</p>
+  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-26k</p>
 </div></div>
 <script>
 /* =========================================================================
@@ -1100,6 +1103,18 @@ function reportSyncTrouble(){
   const unsent = appStorage.unsentKeys ? appStorage.unsentKeys() : [];
   const bar = document.getElementById('cloudBanner');
   if(!bar) return;
+
+  /* A preview pane is not the app. It keeps what is written in a sandbox of
+     its own, nothing goes to the server from here, and the sandbox can come
+     back empty the next time it opens — which is how an evening's writing
+     disappeared once. Said at the top, in the loudest place there is, and it
+     never goes away while the app is running there. */
+  if(appStorage.kind === 'artifact'){
+    bar.style.display = '';
+    bar.textContent = '미리보기 창입니다. 여기에 쓴 것은 서버로 가지 않고, ' +
+      '창을 닫으면 사라질 수 있습니다. 배포한 주소에서 쓰세요.';
+    return;
+  }
   // Runs again after a retry, so it has to be able to take the mark DOWN too.
   if(!syncConflicts.length && !unsent.length){ bar.style.display = 'none'; return; }
   bar.style.display = '';
@@ -1846,14 +1861,21 @@ function noteBodyHtml(note){
 /* The 숙제 note drawn as a list: a heading per person, then that person's
    lines. A bare line names whoever the lines under it belong to; anything
    before the first bare line belongs to no one and is shown first. */
+/* `note` may be null: that is the month with no homework written yet, and it
+   draws as the two names with a + under each. */
 function homeworkHtml(note){
+  const id = note ? note.id : '';
   const groups = [];
-  let cur = {who: '', items: []};
-  groups.push(cur);
-  note.lines.forEach((l, i) => {
-    if(!l.s){ cur = {who: l.t, items: []}; groups.push(cur); return; }
-    cur.items.push({l: l, i: i});
-  });
+  if(!note){
+    HW_WHO.forEach(w => groups.push({who: w, items: []}));
+  } else {
+    let cur = {who: '', items: []};
+    groups.push(cur);
+    note.lines.forEach((l, i) => {
+      if(!l.s){ cur = {who: l.t, items: []}; groups.push(cur); return; }
+      cur.items.push({l: l, i: i});
+    });
+  }
   return '<div class="hw-block">' + groups.map(g => {
     if(!g.who && !g.items.length) return '';
     return '<div class="hw-group">' +
@@ -1861,26 +1883,26 @@ function homeworkHtml(note){
       g.items.map(it =>
         '<div class="todo-row' + (it.l.done ? ' is-done' : '') + '">' +
           '<button class="todo-check" aria-label="done"' +
-            ' onclick="toggleLine(\'' + note.id + '\',' + it.i + ')">' +
+            ' onclick="toggleLine(\'' + id + '\',' + it.i + ')">' +
             '<span class="todo-box"></span></button>' +
-          (hwEditKey === note.id + '|' + it.i
+          (hwEditKey === id + '|' + it.i
             ? '<input type="text" class="todo-edit-input" value="' + escapeAttr(it.l.t) + '"' +
-                ' onkeydown="hwRenameKey(event,\'' + note.id + '\',' + it.i + ')"' +
-                ' onblur="hwRenameCommit(this,\'' + note.id + '\',' + it.i + ')"' +
+                ' onkeydown="hwRenameKey(event,\'' + id + '\',' + it.i + ')"' +
+                ' onblur="hwRenameCommit(this,\'' + id + '\',' + it.i + ')"' +
                 ' aria-label="고쳐 쓰기">' +
               /* Offered only while the task is open for rewording — a row of
                  DEADLINE boxes down a finished list would be all anyone saw. */
               '<button class="due-btn' + (it.l.due ? ' on' : '') + '"' +
                 ' onmousedown="event.preventDefault();"' +
-                ' onclick="openDuePicker(\'' + note.id + '\',' + it.i + ')">DEADLINE</button>'
-            : '<button class="todo-text" onclick="hwStartEdit(\'' + note.id + '\',' + it.i + ')">' +
+                ' onclick="openDuePicker(\'' + id + '\',' + it.i + ')">DEADLINE</button>'
+            : '<button class="todo-text" onclick="hwStartEdit(\'' + id + '\',' + it.i + ')">' +
                 mdToHtml(it.l.t) + '</button>' +
               (it.l.due ? '<span class="due-tag' +
                 (daysUntil(it.l.due) < 0 ? ' over' : '') + '">' +
                 dueLabel(it.l.due) + '</span>' : '')) +
         '</div>').join('') +
       '<div class="hw-row"><button class="hw-add" aria-label="추가"' +
-        ' onclick="addHomework(\'' + note.id + '\',' +
+        ' onclick="addHomework(\'' + id + '\',' +
         JSON.stringify(g.who).replace(/"/g, '&quot;') + ')">' + PLUS_SVG + '</button></div>' +
     '</div>';
   }).join('') + '</div>';
@@ -1966,6 +1988,12 @@ function renderBoard(){
   const last = notes[notes.length - 1];
   if(last) closeRow(baseName(last.name));
 
+  /* The homework stands whether or not anything has been written in it. With
+     no note there was no block, and with no block there was no + — the only
+     way to start one was the text editor, which is not a way anyone should
+     have to find. Both names, both +, from an empty month on. */
+  if(!notes.some(n => isHomework(n.name))) html += homeworkHtml(null);
+
   /* The way to see and rewrite the whole month at once, bottom left — the
      same thing, and the same wording, as the manual editor in Voca/Para. */
   html += '<div class="board-foot"><button class="btn btn-ghost"' +
@@ -2018,8 +2046,17 @@ async function toggleLine(noteId, idx){
 /* A new task goes in under the heading it was added from, which is the line
    after that person's last one — not at the end of the note. */
 async function addHomework(noteId, who){
-  const note = notesOf(viewMonth).find(n => n.id === noteId);
-  if(!note) return;
+  /* No note yet: the + is the thing that makes one, with both names in it,
+     so the block the + was pressed in is the block that appears. */
+  let note = noteId ? notesOf(viewMonth).find(n => n.id === noteId) : null;
+  if(!note){
+    const mm = viewMonth;
+    if(!Array.isArray(board[mm])) board[mm] = [];
+    note = {id: uid(), name: HW_NAME, color: '',
+            lines: HW_WHO.map(w => ({s: false, t: w, done: false, due: ''}))};
+    board[mm].push(note);
+    noteId = note.id;
+  }
   let at = note.lines.length, seen = !who;
   for(let i = 0; i < note.lines.length; i++){
     const l = note.lines[i];
