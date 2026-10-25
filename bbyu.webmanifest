@@ -2,7 +2,7 @@
   "name": "BBYU",
   "short_name": "쀼",
   "description": "The month's board and the daily checks, for two.",
-  "id": "/bbyu",
+  "id": "/BBYOU/",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
