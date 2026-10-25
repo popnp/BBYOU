@@ -1,0 +1,3011 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BBYU</title>
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="%23111"/><text x="32" y="44" fill="%23fff" font-family="Helvetica,Arial" font-size="30" text-anchor="middle">BB</text></svg>'>
+<link rel="apple-touch-icon" href="icon-bbyu-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=switzer@300,400,500,600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
+<style>
+  /* ======================================================================
+     BBYU — the couple's board and month.
+
+     Every token below is lifted from index.html / time.html unchanged. The
+     only size this file adds is --fs-cell, which already exists in time.html
+     under the same name for the same job: the figures in a narrow grid cell.
+     ====================================================================== */
+  :root{
+    --font-ui:'Switzer','Pretendard Variable','Pretendard',
+              'Helvetica Neue',Helvetica,Arial,
+              'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+    /* This app is dark. The two border weights DESIGN names are roles, not
+       values — Layer A is still "the emphatic one", it is simply white here
+       instead of black. Everything below reads these names rather than a
+       literal, so the whole app inverts from one place. */
+    --paper:#111111;                  /* the page */
+    --ink:#FFFFFF;                    /* what is written on it */
+    --paper-line:#2E2E2E;
+    --rust:#FF4602;
+    --rate-0:#00E5FF;
+    --rate-1:#2CE17A;
+    --rate-2:#F2FF00;
+    --rate-3:#FF4602;
+    /* Readable on the black page. A note is light paper, so it takes the
+       app's own blue back — one name, two contexts, the same trick the popup
+       uses for its whole palette. */
+    --link-blue:#7FB2FF;
+    /* The paper a note is on when it has not been given a colour of its own.
+       The one value this file adds: nothing else in the three apps fills a box
+       with a light grey, so there was nothing to reuse. */
+    --postit:#EDEDED;
+    /* How wide a note draws. Two fit across a phone held wide, one across it
+       held tall, and the row wraps on its own either way. */
+    --pi-w:288px;
+    --text-dark:#FFFFFF;
+    /* Lifted from #6B6B6B: that grey is quiet on white and almost unreadable
+       on black, and a muted colour has to stay legible to be muted. */
+    --text-muted:#9A9A9A;
+    /* Layer B — the one grey that reads as a quiet edge on either background,
+       which is why it alone did not have to move. */
+    --line-b:#6B6B6B;
+    --grid-line-strong:rgba(0,0,0,0.5);
+
+    --sp-1:4px;  --sp-2:8px;  --sp-3:12px; --sp-4:16px;
+    --sp-5:24px; --sp-6:32px; --sp-7:48px;
+    --gap-block:24px;
+    --gap-top:16px;
+
+    /* The same four steps, same values. */
+    --fs-display:clamp(38px, 12vw, 50px);
+    --fs-lead:30px;
+    --fs-body:22px;
+    --fs-label:16px;
+    /* time.html's fifth step, for figures inside a narrow cell. */
+    --fs-cell:13px;
+
+    --content-w:998px;
+    --vw:100vw;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0; padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--text-dark);
+    font-family:var(--font-ui);
+    font-weight:400;
+    font-size:var(--fs-body);
+    line-height:1.3;
+    -webkit-text-size-adjust:100%;
+    padding:var(--gap-top) var(--sp-4) var(--sp-7);
+  }
+  .wrap{max-width:var(--content-w); margin:0 auto;}
+
+  /* ---- the sync banner, word for word the one the other two apps show ---- */
+  #cloudBanner{
+    display:none;
+    margin:0 0 var(--sp-4);
+    padding:var(--sp-3) var(--sp-4);
+    background:var(--rust);
+    color:var(--ink);
+    font-size:var(--fs-label);
+    text-align:center;
+  }
+
+  /* ---- header ----
+     The two panes are switched by swiping, so there is nothing here to press
+     for them. What remains is the month, and the way into Options. */
+  .pane-btn{
+    font-family:var(--font-ui); font-size:var(--fs-body); font-weight:400;
+    background:none; border:none; border-radius:0; padding:0;
+    color:var(--text-muted); cursor:pointer;
+  }
+  .pane-btn.on{color:var(--ink); font-weight:500;}
+  .month-row .spacer{flex:1;}
+  .month-nav{display:flex; align-items:center; gap:var(--sp-3);}
+
+  /* Which of the two screens this is, and the way to the other one on a
+     machine with no touch. These sat absolutely centred on the screen and
+     landed on top of the month, which is wide: "2026. 10" with an arrow on
+     either side reaches the middle of a phone. So they stand in the row with
+     everything else, in the space between the month and 설정. */
+  .pane-dots{
+    display:flex; align-items:center; gap:var(--sp-2);
+    flex:0 0 auto;
+  }
+  .pane-dots button{
+    width:18px; height:18px; padding:0;
+    display:flex; align-items:center; justify-content:center;
+    background:none; border:none; cursor:pointer; line-height:0;
+  }
+  /* The one round shape in this family of apps, and the only thing allowed to
+     be round: a dot that is not a circle is not a dot. */
+  .pane-dots i{
+    display:block; width:6px; height:6px; border-radius:50%;
+    background:var(--text-muted);
+  }
+  .pane-dots button.on i{background:var(--ink);}
+
+  /* ---- the month stepper, shared by both panes ---- */
+  .month-row{
+    display:flex; align-items:center; gap:var(--sp-3);
+    margin-bottom:var(--gap-block);
+  }
+  .month-label{font-size:var(--fs-lead); font-weight:500;}
+  .step-btn{
+    width:24px; height:24px; padding:0;
+    display:flex; align-items:center; justify-content:center;
+    background:none; border:none; border-radius:0;
+    color:var(--ink); cursor:pointer; line-height:0;
+  }
+  .step-btn:disabled{opacity:0.22; cursor:not-allowed;}
+  /* The one chevron both other files draw, turned. */
+  .chev{display:inline-block;}
+  .chev.left{transform:scaleX(-1);}
+
+  /* Word for word index.html's: 16px, weight 300, the page's own colour —
+     not muted — and 6px under it. */
+  .field-label{
+    display:block;
+    font-family:var(--font-ui); font-weight:300; font-size:var(--fs-label);
+    color:var(--text-dark);
+    margin-bottom:6px;
+  }
+  .hint{font-family:var(--font-ui); font-weight:300; font-size:var(--fs-label); color:var(--text-muted); margin:0;}
+
+  .btn{
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
+    letter-spacing:0.01em;
+    border:none; border-radius:0;
+    padding:var(--sp-1) var(--sp-4);
+    cursor:pointer;
+    transition:opacity .15s, background .15s;
+  }
+  .btn:active{transform:scale(0.98);}
+  .btn-primary{background:transparent; color:var(--ink); border:1px solid var(--ink);}
+  .btn-ghost{background:transparent; color:var(--ink); border:1px solid var(--ink);}
+  .btn-primary:hover, .btn-ghost:hover{background:rgba(255,255,255,0.08);}
+  .btn-danger{background:transparent; color:var(--rust); border:none; padding:6px 10px; font-size:var(--fs-label);}
+  /* The armed state of a two-press action: a red dotted rule under the text
+     only, never under the whole box. */
+  .is-armed{
+    background-image:linear-gradient(to right, var(--rust) 0 100%);
+    background-repeat:no-repeat;
+    background-size:100% 1px;
+    background-position:0 100%;
+    background-origin:content-box;
+    background-clip:content-box;
+  }
+  .actions{display:flex; gap:var(--sp-2); flex-wrap:wrap; align-items:center;}
+
+  input[type="text"], textarea{
+    font-family:var(--font-ui); font-size:var(--fs-body); color:var(--ink);
+    background:transparent;
+    border:0.5px solid var(--ink); border-radius:0;
+    padding:var(--sp-1) var(--sp-4);
+    width:100%;
+  }
+  textarea{line-height:1.3; resize:vertical;}
+
+  /* ======================================================================
+     PANE 1 — the board
+
+     No headings. The top note is the 쀼훈, the ones under it are the agenda,
+     and the size of the lettering is what says which is which. A heading over
+     each would be a second way of saying the same thing, and the board is
+     meant to read as a wall of notes rather than as a form.
+
+     The 숙제 at the foot is deliberately NOT a note: it is a list of things to
+     do, so it is set the way the to-do list in Time is set — a tick, a line of
+     16px text, struck through when it is done and nothing else.
+     ====================================================================== */
+  .board-stack{display:flex; flex-direction:column; gap:var(--sp-3);}
+  /* Notes of one tier stand side by side and drop to the next line when the
+     row runs out, which is how they behave on a wall. Centred, so a single
+     note is in the middle rather than stranded at the left. */
+  .pi-row{
+    display:flex; flex-wrap:wrap; justify-content:center;
+    align-items:flex-start;
+    gap:var(--sp-3);
+  }
+  /* The way to add one more note of the tier above. On the right, where every
+     other control in these apps that acts on the block above it sits. */
+  .add-row{display:flex; justify-content:flex-end;}
+  /* The same mark, in the same 24px box, as every + in the other two apps.
+     No wording: nothing in this family of apps spells out "add". */
+  .add-btn, .hw-add{
+    width:24px; height:24px; padding:0;
+    display:flex; align-items:center; justify-content:center;
+    background:none; border:none; border-radius:0;
+    color:var(--ink); cursor:pointer; line-height:0;
+  }
+  .add-btn svg, .hw-add svg{width:16px; height:16px; fill:currentColor; display:block;}
+  .add-btn:hover, .hw-add:hover{opacity:0.6;}
+
+  /* A note. Square, like everything else in these three apps — the paper is
+     suggested by the colour, not by a rounded corner or a shadow, neither of
+     which exists anywhere in the design.
+     A div, not a button: nothing may nest inside a button, and this has to be
+     able to hold one later. */
+  .pi{
+    /* A note is a set size, not whatever the screen is wide. One name, so
+       the whole board resizes from here. */
+    --link-blue:#2519FF;
+    width:var(--pi-w); flex:0 0 auto; text-align:center;
+    /* Square at the smallest: the same measure down as across. A note with
+       more on it grows downward from there, never narrower or wider. */
+    min-height:var(--pi-w);
+    /* A column so that what is written sits in the middle of the paper rather
+       than at the top of it, with the slack falling evenly above and below. */
+    display:flex; flex-direction:column; justify-content:center;
+    border:none; border-radius:0;
+    padding:var(--sp-4);
+    background:var(--postit);
+    cursor:pointer;
+    font-family:var(--font-ui);
+    /* Dark lettering even though the page is black: a note's paper is light,
+       so what is written on it follows the note, not the page. */
+    color:#111;
+  }
+  /* The lines inside a note are big or small, and it is the PAIR of sizes that
+     steps down a tier at a time: both rungs move together, so the tiers read
+     as sizes rather than as colours that happen to differ. */
+  .pi-big{font-weight:500; line-height:1.2; display:block; white-space:pre-wrap; word-break:break-word;}
+  .pi-small{font-weight:300; line-height:1.3; display:block; white-space:pre-wrap; word-break:break-word;}
+  .pi-big + .pi-big, .pi-big + .pi-small, .pi-small + .pi-big, .pi-small + .pi-small{margin-top:var(--sp-2);}
+
+  /* An open note: the paper stays, the words become the text they are made
+     of, and the tools sit under them on the same paper. */
+  .pi.editing{cursor:default;}
+  .pi-edit{
+    width:100%; flex:1 1 auto; min-height:120px;
+    font-family:var(--font-ui); font-size:var(--fs-body); font-weight:400;
+    line-height:1.3; text-align:center;
+    color:#111; background:rgba(255,255,255,0.55);
+    border:0.5px solid rgba(0,0,0,0.35); border-radius:0;
+    padding:var(--sp-2); resize:vertical;
+  }
+  .pi-tools{
+    display:flex; align-items:center; justify-content:center;
+    gap:var(--sp-3); margin-top:var(--sp-3);
+  }
+  .pi-tools input[type=color]{
+    width:26px; height:26px; flex:0 0 auto;
+    padding:0; border:0.5px solid rgba(0,0,0,0.35); border-radius:0;
+    background:none; cursor:pointer; -webkit-appearance:none; appearance:none;
+  }
+  .pi-tools input[type=color]::-webkit-color-swatch-wrapper{padding:0;}
+  .pi-tools input[type=color]::-webkit-color-swatch{border:none;}
+
+  /* ---- the five colours in Options: a swatch and its name, one per row ---- */
+  .color-line{display:flex; align-items:center; gap:var(--sp-4);}
+  .color-line + .color-line{margin-top:var(--sp-2);}
+  .color-line input[type=color]{
+    width:26px; height:26px; flex:0 0 auto;
+    padding:0; border:0.5px solid var(--line-b); border-radius:0;
+    background:none; cursor:pointer; -webkit-appearance:none; appearance:none;
+  }
+  .color-line input[type=color]::-webkit-color-swatch-wrapper{padding:0;}
+  .color-line input[type=color]::-webkit-color-swatch{border:none;}
+  .color-line span{font-family:var(--font-ui); font-size:var(--fs-label); color:var(--ink);}
+  .pi-tool{
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
+    padding:2px var(--sp-2);
+    background:none; color:#111;
+    border:0.5px solid rgba(0,0,0,0.35); border-radius:0;
+    cursor:pointer;
+  }
+  .pi-tool.done{font-weight:500;}
+
+  .pi-1 .pi-big{font-size:var(--fs-display);}
+  .pi-1 .pi-small{font-size:var(--fs-body);}
+  .pi-2 .pi-big{font-size:var(--fs-lead);}
+  .pi-2 .pi-small{font-size:var(--fs-label);}
+
+  /* A category with nothing in it: one + in the middle, in that category's
+     own paper colour, and no wording — the colour says which it is. */
+  .start-row{
+    display:flex; align-items:center; justify-content:center;
+    padding:var(--sp-5) 0;
+  }
+  /* The way into the month as text, bottom left. */
+  .board-foot{margin-top:var(--sp-6); text-align:right;}
+
+  /* ---- a task's deadline ---- */
+  /* Offered beside the task only while it is open for rewording. */
+  .due-btn{
+    flex:0 0 auto;
+    font-family:var(--font-ui); font-size:11px; font-weight:500;
+    letter-spacing:0.04em;
+    padding:3px var(--sp-2);
+    background:none; color:var(--text-muted);
+    border:0.5px solid var(--line-b); border-radius:0;
+    cursor:pointer;
+  }
+  .due-btn.on{color:var(--ink); border-color:var(--ink);}
+  /* What is left behind once a date is set: small, after the wording. */
+  .due-tag{
+    flex:0 0 auto;
+    font-family:var(--font-ui); font-size:11px; font-weight:500;
+    color:var(--text-muted); margin-left:var(--sp-2);
+  }
+  .due-tag.over{color:var(--rust);}
+
+  /* ---- the little month the deadline is picked from ---- */
+  .due-grid{display:grid; grid-template-columns:repeat(7, 1fr); gap:2px; margin-top:var(--sp-3);}
+  .due-grid .due-dow{
+    font-family:var(--font-ui); font-size:11px; font-weight:300;
+    color:var(--text-muted); text-align:center; padding-bottom:2px;
+  }
+  .due-grid button{
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
+    aspect-ratio:1; padding:0;
+    background:none; color:var(--ink);
+    border:none; border-radius:0; cursor:pointer;
+  }
+  .due-grid button.off{visibility:hidden;}
+  /* A chosen day is a disc, as every other day-mark in these apps is — a
+     rust square is the one shape the design does not have. */
+  .due-grid button.on{
+    background:var(--rust); color:#FFFFFF;
+    border-radius:50%;
+  }
+  .due-grid button.now{text-decoration:underline;}
+
+  /* ---- 숙제, set as the to-do list in Time is set ---- */
+  /* The homework is a list, not a wall: it reads from the left like the to-do
+     list in Time, whatever the notes above it are doing. */
+  .hw-block{margin-top:var(--sp-5); text-align:left;}
+  /* The two of them are parted by space, not by a line. `.hw-who + .hw-who`
+     used to carry that margin and never fired once: the two headings are not
+     siblings — a list of rows and a + stand between them. The gap belongs to
+     the group, which is why each one is now wrapped. */
+  a{color:var(--link-blue);}
+  .hw-group + .hw-group{margin-top:var(--sp-6);}
+  .hw-who{
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:500;
+    color:var(--ink);
+    margin-bottom:var(--sp-1);
+  }
+  .todo-row{display:flex; align-items:center; gap:var(--sp-2); padding:0; min-height:32px;}
+  .todo-check{
+    width:24px; height:24px; flex:0 0 auto; padding:0;
+    display:flex; align-items:center; justify-content:center;
+    background:none; border:none; border-radius:0;
+    cursor:pointer; line-height:0; color:var(--ink);
+  }
+  .todo-box{width:16px; height:16px; border:1px solid var(--ink); display:block;}
+  .todo-row.is-done .todo-box{background:var(--ink);}
+  .todo-text{
+    font-family:var(--font-ui);
+    font-size:var(--fs-label); font-weight:400;
+    line-height:26px; color:var(--ink);
+    flex:1; min-width:0; overflow-wrap:anywhere;
+    background:none; border:none; padding:0; text-align:left;
+    cursor:pointer;
+  }
+  /* Struck through, not faded. Fading reads as "can't press this", which is
+     what :disabled looks like everywhere else in all three apps. */
+  .todo-row.is-done .todo-text{text-decoration:line-through;}
+  .hw-row{display:flex; justify-content:flex-end;}
+  /* Sized to the line it stands in, or the row would jump as it opens. */
+  .todo-edit-input{
+    flex:1; min-width:0;
+    font-size:var(--fs-label); line-height:26px;
+    padding:0 var(--sp-1);
+  }
+  .todo-edit-input.prose{line-height:1.45; padding:var(--sp-1);}
+
+  /* ---- the colour swatch in the note editor, as Options draws it ---- */
+
+  /* ======================================================================
+     PANE 2 — the month
+     ====================================================================== */
+  /* ---- below the calendar: today, written out as a list ----
+     Not a box. A box around it said "this is a thing" without saying what
+     thing; the day simply reads downward, the way the rest of the app does. */
+  /* The day stands on white paper while the month below it stays black. The
+     four names are declared again here, the way the popup does it, so every
+     rule inside simply follows: "ink" is black in this box and white outside
+     it, and nothing has to restate a colour. */
+  .today-list{
+    --paper:#FFFFFF;
+    --ink:#111111;
+    --text-muted:#6B6B6B;
+    --line-b:#9A9A9A;
+    --link-blue:#2519FF;
+    background:var(--paper); color:var(--ink);
+    padding:var(--sp-5) var(--sp-4);
+    margin-bottom:var(--gap-block);
+    text-align:center;
+  }
+  /* Everything in the box reads up the middle. */
+  .today-list .today-date,
+  .today-list .today-line,
+  .today-list .todo-row,
+  .today-list .hw-row{justify-content:center;}
+  /* Not flex:1 here: stretched to the full width, a line would sit left of
+     centre with the challenge disc pushed out to the edge. Sized to its own
+     wording, the disc and the words centre together. */
+  .today-list .todo-text{flex:0 1 auto; text-align:center;}
+  /* Prose needs the width of the paper, not the width of its own wording. */
+  .today-list .diary-group .todo-row{width:100%;}
+  .today-list .todo-edit-input.prose{flex:1 1 auto; text-align:center;}
+  /* The errands are what the day is read for, so they are set a step up from
+     everything else in the box. The diary and the deadlines stay small. */
+  .today-list .hw-group:first-of-type .todo-text{
+    font-size:var(--fs-body); line-height:1.35;
+  }
+  /* The day being written. A button, because pressing it comes back to
+     today after another date has been chosen. */
+  .today-date{
+    display:flex; align-items:center; gap:var(--sp-3);
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
+    color:var(--text-muted);
+    background:none; border:none; border-radius:0; padding:0;
+    margin-bottom:var(--sp-3); cursor:pointer; text-align:left;
+  }
+  .back-today{
+    font-size:11px; color:var(--rust);
+    border:0.5px solid var(--rust); padding:1px var(--sp-2);
+  }
+  /* A deadline falling on this day. Worked out from the board, so it is not
+     a line anyone can edit here. */
+  /* Quieter than the day's own errands rather than louder: it is a date
+     falling due, not something to be done here. */
+  .due-sched{
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
+    color:var(--text-muted); padding:2px 0; overflow-wrap:anywhere;
+  }
+  .today-line{
+    display:flex; align-items:center; gap:var(--sp-2);
+    flex-wrap:wrap;
+    padding:var(--sp-2) 0;
+  }
+  /* Still worn by the name buttons in Options, which are a choice of one. */
+  .opt-btn{
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
+    padding:3px var(--sp-2);
+    background:transparent; color:var(--ink);
+    border:1px solid transparent; border-radius:0;
+    cursor:pointer;
+  }
+  .opt-btn.selected{border-color:var(--ink);}
+
+  /* ---- the day's three lines ----
+     Name, colon, blank. The blanks line up because the names share a width,
+     which is what makes the three read as one block rather than three. */
+  .mark-group{display:block; max-width:300px; margin:0 auto; text-align:left;}
+  .mark-row{display:flex; align-items:center; gap:var(--sp-2); padding:3px 0;}
+  .mark-label{
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
+    color:var(--ink); width:104px; flex:0 0 auto;
+  }
+  .mark-colon{font-size:var(--fs-label); color:var(--text-muted);}
+  /* The same box every other field in these apps is written in — but the
+     width has to out-rank `input[type="text"]`, which carries width:100% and
+     a higher specificity than a class on its own. Unqualified, this rule lost
+     and the three boxes ran off the right edge of the paper. */
+  .mark-row .mark-input{
+    flex:1 1 auto; width:auto; min-width:0;
+    font-size:var(--fs-label); line-height:24px;
+    padding:0 var(--sp-2);
+  }
+  /* The diary sits in the same list as the rest of the day, only quieter: it
+     is the day's aside, not an instruction. */
+  /* pre-wrap, or the line breaks the diary was written with collapse into
+     spaces: it is one piece of writing and it keeps the shape it was given. */
+  .diary-group .todo-text{
+    font-weight:300; color:var(--text-muted);
+    white-space:pre-wrap; line-height:1.5;
+  }
+  .diary-group .todo-edit-input.prose{line-height:1.5; text-align:center;}
+  /* Nothing names the three lists any more, so the space between them is
+     what parts them — it has to be plainly bigger than the space between two
+     lines of the same list, or they read as one. */
+  .today-list .hw-group + .hw-group{margin-top:var(--sp-5);}
+  .today-list .hw-row{margin-top:-4px;}
+  /* The date heading, on paper now, needs a line under it rather than only
+     space — it is a heading, not the first entry. */
+  .today-list .today-date{width:100%; margin-bottom:var(--sp-4);}
+
+  /* ---- the month grid ----
+     Seven days and then a narrow eighth column, which is the week itself:
+     past Sunday, where a week ends. */
+  /* minmax(0,1fr), not 1fr: a plain 1fr will not shrink below the widest
+     thing in the column, so one long errand set on a single line pulled its
+     day wider and squeezed the rest of the week. With a floor of 0 the track
+     keeps its share and the errand is the thing that gets cut. */
+  .cal-grid{display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)) 24px; gap:4px;}
+  .cal-dow{
+    font-family:var(--font-ui); font-weight:300; font-size:var(--fs-label);
+    text-align:center; color:var(--text-muted); padding-bottom:4px;
+  }
+  .cal-cell{
+    /* A column that starts at the top. A button centres its content by
+       default, so a day with three lines on it pushed its own date down and
+       the week's dates stopped lining up with each other. */
+    display:flex; flex-direction:column;
+    align-items:flex-start; justify-content:flex-start;
+    min-height:62px;
+    border:none; border-radius:0;
+    padding:4px 5px;
+    background:transparent;
+    text-align:left;
+    font-family:var(--font-ui);
+    cursor:pointer;
+  }
+  /* In a column a child is only as wide as its content, and the wording has
+     to have the cell's width to be wrapped and cut against. Only the wording:
+     the same rule on every child stretched the 4px diary dot into a bar. */
+  .cal-cell > .cal-sched{width:100%;}
+  .cal-cell.empty{background:none; cursor:default;}
+  .cal-daynum{font-size:var(--fs-cell); color:var(--ink); display:block;}
+  .cal-cell.weekend .cal-daynum{color:var(--text-muted);}
+  /* The day being written, when it is not today: outlined rather than
+     filled, so today's disc stays the one solid mark on the month. */
+  .cal-cell.picked .cal-daynum{
+    width:22px; height:22px; border-radius:50%;
+    border:1px solid var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    margin:-2px 0 2px -2px;
+  }
+  /* Today, the 22px rust disc the projects month already draws. A fixed size:
+     a one-figure date and a two-figure date must draw the same circle. */
+  .cal-cell.today .cal-daynum{
+    width:22px; height:22px; border-radius:50%;
+    background:var(--rust); color:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    margin:-2px 0 2px -2px;
+  }
+  /* Output, then input-or-exercise. Weekends have neither. */
+  .cal-marks{display:flex; gap:2px; margin-top:2px;}
+  /* Empty is an outline; filled is that mark's own colour, written on by the
+     grid so the three can be told apart at a glance. */
+  .cal-sq{width:8px; height:8px; border:0.5px solid var(--line-b); display:block;}
+  /* The errands, written out in the cell. Small enough that two or three fit
+     above the ticks, and clipped rather than wrapped forever — the cell says
+     what is on, the day says the rest. */
+  .cal-sched{
+    /* Two lines, cut at the end of the second. `text-overflow` counts one
+       line only, so the box model that can count lines is the one used here —
+       prefixed, which is how every browser still spells it. */
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+    font-size:var(--fs-cell); font-weight:400; line-height:1.3;
+    color:var(--ink); margin-top:2px;
+    overflow-wrap:anywhere;
+  }
+  /* The challenge keeps a line of its own, and keeps it to one. */
+  .cal-sched.chal{-webkit-line-clamp:1; color:var(--rust);}
+  /* A deadline rides in the two lines above rather than taking one, so it is
+     inline — grey, to say it is not one of the day's own errands. */
+  .cal-sched .due{color:var(--text-muted);}
+  /* A line of diary was written on this day. The errands say themselves; this
+     is the only thing left that needs a mark. */
+  .cal-dot{
+    width:4px; height:4px; border-radius:50%;
+    background:var(--text-muted); display:block; margin-top:3px;
+  }
+
+  /* ---- the eighth column: the week's 쀼톡 ---- */
+  .cal-week{
+    min-height:62px; padding:2px 0;
+    display:flex; align-items:center; justify-content:center;
+    background:transparent; border:none; border-radius:0;
+    color:var(--text-muted); cursor:pointer;
+  }
+  .cal-week svg{width:14px; height:14px; fill:currentColor; display:block;}
+  .cal-week:hover{color:var(--ink);}
+  /* REVIEW will not fit across a 24px column, so it runs down it. Nothing
+     else in these apps is set sideways, which is rather the point: it marks
+     the week rather than any one day in it. */
+  /* 쀼톡 as it is read: the three parts with space between them and no
+     headings — the gap says where one ends. */
+  .talk-read{
+    display:block; width:100%;
+    background:none; border:none; border-radius:0; padding:0;
+    text-align:left; cursor:pointer;
+  }
+  .talk-part{
+    display:block;
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
+    line-height:1.5; color:var(--ink);
+    overflow-wrap:anywhere;
+  }
+  .talk-part + .talk-part{margin-top:var(--sp-5);}
+
+  .cal-week .mark{
+    writing-mode:vertical-rl;
+    font-size:9px; font-weight:500; letter-spacing:0.08em;
+    color:var(--ink);
+  }
+
+  /* ======================================================================
+     Modals — the same box all three apps use
+     ====================================================================== */
+  .modal-overlay{
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,0.45);
+    z-index:1000;
+    align-items:flex-start; justify-content:center;
+    padding:20px; overflow-y:auto;
+  }
+  .modal-overlay.show{display:flex;}
+  /* The popup is white, as it is in the other two apps — the page went dark,
+     the box did not. Rather than restating a colour on every rule inside it,
+     the four names are simply declared again here: inside this box "ink" is
+     black and "paper" is white, and everything in it follows without being
+     told. The one thing that cannot follow is a hover built on rgba, which is
+     overridden just below. */
+  .modal-box{
+    --paper:#FFFFFF;
+    --link-blue:#2519FF;
+    --ink:#111111;
+    --text-dark:#111111;
+    --text-muted:#6B6B6B;
+    position:relative; background:var(--paper); color:var(--ink);
+    border:0.5px solid var(--line-b); border-radius:0;
+    max-width:360px; width:100%; margin:auto;
+    padding:var(--sp-5); box-sizing:border-box;
+  }
+  .modal-box .btn-primary:hover, .modal-box .btn-ghost:hover{background:rgba(0,0,0,0.05);}
+  .modal-close{
+    position:absolute; top:var(--sp-3); right:var(--sp-3);
+    width:24px; height:24px;
+    display:flex; align-items:center; justify-content:center;
+    background:transparent; border:none;
+    font-size:var(--fs-body); line-height:1; color:var(--ink); cursor:pointer; padding:0;
+  }
+  .modal-title{
+    font-family:var(--font-ui); font-size:var(--fs-body); font-weight:500;
+    color:var(--ink); margin:0 0 var(--sp-4); padding-right:28px;
+  }
+  /* How Options is divided in the other two apps: no box around a section,
+     no rule between them — the line is off and only the space it held is
+     kept. Nothing here is full-bleed, because there is no line to bleed. */
+  .divider-bleed{height:1px; background:transparent; margin:30px 0 18px;}
+  .card-panel{
+    background:transparent; border:none; box-shadow:none;
+    border-radius:0; padding:22px 0;
+    position:relative;
+  }
+  .panel-inner{position:relative;}
+
+  /* ---- the filter above the data editor ---- */
+  .filter-row{display:flex; align-items:center; gap:var(--sp-3); flex-wrap:wrap;}
+  /* The two dates and their dash move as one, or the dash is left stranded
+     beside the first box when the row wraps. */
+  .date-pair{display:flex; align-items:center; gap:var(--sp-2);}
+  .filter-row input[type="date"]{
+    width:auto; flex:0 1 auto;
+    font-size:var(--fs-label);
+    padding:var(--sp-1) var(--sp-2);
+  }
+  /* A tick, drawn the way the to-do list draws one, so a box is a box
+     everywhere in these apps. */
+  .chk{
+    display:flex; align-items:center; gap:var(--sp-2);
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
+    background:none; border:none; border-radius:0; padding:0;
+    color:var(--text-muted); cursor:pointer;
+  }
+  .chk-box{
+    width:16px; height:16px; flex:0 0 auto;
+    border:1px solid var(--line-b); display:block;
+  }
+  .chk.on{color:var(--ink);}
+  .chk.on .chk-box{background:var(--ink); border-color:var(--ink);}
+</style>
+<link rel="manifest" href="bbyu.webmanifest">
+<meta name="theme-color" content="#111111">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BBYU">
+<script>
+/* Registers the service worker — the same one the other two apps use, which is
+   why this file has to sit in the same folder as them. */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</head>
+<body>
+<div class="wrap">
+
+<p id="cloudBanner"></p>
+
+<div class="month-row">
+  <span class="month-nav" id="monthNav">
+    <button class="step-btn" onclick="stepMonth(-1)" aria-label="Previous month">
+      <svg class="chev left" width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5 L18.5 12 L7 20.5" fill="none" stroke="currentColor" stroke-width="4.2" stroke-linecap="square" stroke-linejoin="miter"/></svg>
+    </button>
+    <span class="month-label" id="monthLabel"></span>
+    <button class="step-btn" onclick="stepMonth(1)" aria-label="Next month">
+      <svg class="chev" width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5 L18.5 12 L7 20.5" fill="none" stroke="currentColor" stroke-width="4.2" stroke-linecap="square" stroke-linejoin="miter"/></svg>
+    </button>
+  </span>
+  <span class="spacer"></span>
+  <span class="pane-dots" id="paneDots">
+    <button onclick="setPane('board')" aria-label="Board"><i></i></button>
+    <button onclick="setPane('cal')" aria-label="Month"><i></i></button>
+  </span>
+  <button class="pane-btn" id="paneBtnOpt" onclick="toggleOptions()">설정</button>
+</div>
+
+<!-- ================= PANE 1 — the board ================= -->
+<section id="paneBoard">
+  <div class="board-stack" id="boardStack"></div>
+</section>
+
+<!-- ================= PANE 2 — the month ================= -->
+<section id="paneCal" style="display:none;">
+  <div class="today-list" id="todayBox"></div>
+  <div class="cal-grid" id="calGrid"></div>
+</section>
+
+<!-- ================= Options ================= -->
+
+
+</div><!-- /wrap -->
+
+<div id="noteOverlay" class="modal-overlay"><div id="noteBox" class="modal-box"></div></div>
+<div id="talkOverlay" class="modal-overlay"><div id="talkBox" class="modal-box"></div></div>
+<div id="dueOverlay" class="modal-overlay"><div id="dueBox" class="modal-box"></div></div>
+<!-- Options opens over the board rather than replacing it: it is a handful
+     of settings, not a third place to be. -->
+<div id="optOverlay" class="modal-overlay"><div id="optBox" class="modal-box">
+<div class="card-panel"><div class="panel-inner">
+    <label class="field-label">이름</label>
+    <div class="actions" style="margin-bottom:var(--sp-3);">
+      <input type="text" id="nameA" style="flex:1; min-width:120px;">
+      <input type="text" id="nameB" style="flex:1; min-width:120px;">
+      <button class="btn btn-primary" onclick="saveNames()">저장</button>
+    </div>
+    <label class="field-label">이 기기를 쓰는 사람</label>
+    <div class="actions" id="meRow"></div>
+  </div></div>
+
+  <div class="divider-bleed"></div>
+
+  <div class="card-panel"><div class="panel-inner">
+    <label class="field-label">동기화 코드</label>
+    <p class="hint" style="margin-bottom:var(--sp-3);">이 코드로 데이터가 저장됩니다. 네 기기에 같은 코드를 넣으면 같은 데이터를 봅니다. 다른 두 앱과는 따로 돌아갑니다.</p>
+    <div class="actions">
+      <input type="text" id="syncIdInput" style="flex:1; min-width:200px; font-size:var(--fs-label);">
+      <button class="btn btn-ghost" onclick="copySyncId()">복사</button>
+      <button class="btn btn-primary" onclick="applySyncId(this)">이 코드 쓰기</button>
+    </div>
+    <p class="hint" id="syncMsg" style="margin-top:var(--sp-2);"></p>
+  </div></div>
+
+  <div class="divider-bleed"></div>
+
+  <div class="card-panel"><div class="panel-inner">
+    <label class="field-label">색</label>
+    <p class="hint" style="margin-bottom:var(--sp-3);">위 셋은 포스트잇 종이, 아래 셋은 달력의 체크 네모입니다.</p>
+    <div id="colorRows"></div>
+    <div class="actions" style="margin-top:var(--sp-3);">
+      <button class="btn btn-ghost" onclick="resetColors(this)">처음 색으로</button>
+    </div>
+  </div></div>
+
+  <div class="divider-bleed"></div>
+
+  <div class="card-panel"><div class="panel-inner">
+    <label class="field-label">데이터 수정</label>
+    <p class="hint" style="margin-bottom:var(--sp-3);">보고 싶은 것만 골라 꺼낸 다음, 글로 고쳐서 되돌립니다. 꺼낸 범위 안에 있는 것만 바뀌고 나머지는 그대로 있습니다.</p>
+    <div class="filter-row" id="dataKinds">
+      <button class="chk on" onclick="toggleKind(this,'review')"><span class="chk-box"></span>쀼리뷰</button>
+      <button class="chk on" onclick="toggleKind(this,'talk')"><span class="chk-box"></span>쀼톡</button>
+      <button class="chk on" onclick="toggleKind(this,'day')"><span class="chk-box"></span>쀼일</button>
+    </div>
+    <div class="filter-row" style="margin-top:var(--sp-3);">
+      <span class="date-pair">
+        <input type="date" id="dataFrom" aria-label="시작일" onchange="renderDataText()">
+        <span class="hint" style="margin:0;">—</span>
+        <input type="date" id="dataTo" aria-label="끝일" onchange="renderDataText()">
+      </span>
+      <button class="btn btn-ghost" onclick="clearDataRange()">전체</button>
+    </div>
+    <textarea id="dataText" rows="14" spellcheck="false"
+      style="margin-top:var(--sp-3); font-size:var(--fs-label);"></textarea>
+    <div class="actions" style="margin-top:var(--sp-3);">
+      <button class="btn btn-primary" onclick="applyDataText(this)">되돌리기</button>
+      <button class="btn btn-ghost" onclick="copyDataText()">복사</button>
+      <button class="btn btn-ghost" onclick="renderDataText()">다시 꺼내기</button>
+    </div>
+    <p class="hint" id="dataMsg" style="margin-top:var(--sp-2);"></p>
+  </div></div>
+
+  <div class="divider-bleed"></div>
+
+  <div class="card-panel"><div class="panel-inner">
+    <label class="field-label">백업 / 복원</label>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="backupAll()">백업</button>
+      <button class="btn btn-ghost" onclick="openRestorePicker()">Import .txt</button>
+    </div>
+    <input type="file" id="restoreFile" accept=".txt,text/plain" style="display:none;" onchange="handleRestoreFile(this)">
+    <p class="hint" id="backupMsg" style="margin-top:var(--sp-2);"></p>
+    <div id="restoreWrap" style="display:none; margin-top:var(--sp-3);">
+      <p class="hint" id="restoreMsg" style="margin:0 0 var(--sp-2);"></p>
+      <div class="actions">
+        <button class="btn btn-primary" id="restoreGoBtn" onclick="restoreFromFile(this)">복원</button>
+        <button class="btn btn-ghost" onclick="cancelRestore()">취소</button>
+      </div>
+    </div>
+  </div></div>
+
+  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-26i</p>
+</div></div>
+<script>
+/* =========================================================================
+   BBYU — the board and the month, for two people.
+
+   WHY THE KEYS ARE SPLIT THE WAY THEY ARE
+
+   The other two apps store one JSON blob per key, and their conflict guard was
+   written for one person on two devices. Two people writing at once is a
+   different problem: whoever saves last wins the whole blob, so a tick made on
+   one phone can wipe a tick made on the other a second earlier.
+
+   The day was once two records, one per person, for exactly that reason. It
+   is one record again: the two of them asked for the ticks not to be told
+   apart, and a tick nobody owns cannot be owned by the wrong person either.
+   `bbyu-daily-a` and `bbyu-daily-b` are still read once, so days ticked under
+   the old shape are not lost, but nothing writes them any more.
+
+   What is written together — the board, the day, the week's 쀼톡 — is written
+   while the two of them are sitting down doing the review, which is the one
+   time simultaneous edits are least likely.
+   ========================================================================= */
+
+/* ---- storage ----------------------------------------------------------
+   Lifted unchanged from index.html: local first, then the server, with a mark
+   on anything the server did not take and a retry when the connection comes
+   back. The ONE change is the name of the key the sync code is kept under, so
+   this app travels on a code of its own and sharing it with one other person
+   does not hand over the vocabulary and time data as well. */
+const SUPABASE_URL = 'https://nwjrjptiugewhmxixxix.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53anJqcHRpdWdld2hteGl4eGl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTg2MDIsImV4cCI6MjEwMDM5NDYwMn0.Un6oOpn3iKeMXssTNQmOszHiYxaKFxamTp_oPDaZ42I';
+const SYNC_ID_KEY = 'bbyu-sync-id';   // its own code: this app is shared with one other person
+
+function getSyncId(){
+  let id = null;
+  try{ id = localStorage.getItem(SYNC_ID_KEY); }catch(e){}
+  if(!id){
+    id = 'u_' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+    try{ localStorage.setItem(SYNC_ID_KEY, id); }catch(e){}
+  }
+  return id;
+}
+function setSyncId(id){
+  try{ localStorage.setItem(SYNC_ID_KEY, String(id).trim()); }catch(e){}
+}
+
+/* A read gives up after this long. Without it a request that never answers —
+   not refused, just silent — leaves the whole load pending for ever. */
+const CLOUD_TIMEOUT_MS = 8000;
+
+async function cloudGet(key){
+  const id = getSyncId() + ':' + key;
+  const url = SUPABASE_URL + '/rest/v1/app_data?id=eq.' + encodeURIComponent(id) + '&select=payload';
+  const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const bell = ctl ? setTimeout(() => ctl.abort(), CLOUD_TIMEOUT_MS) : null;
+  let res;
+  try{
+    res = await fetch(url, {
+      headers: {apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY},
+      signal: ctl ? ctl.signal : undefined
+    });
+  } finally {
+    if(bell) clearTimeout(bell);
+  }
+  if(!res.ok) throw new Error('cloud get ' + res.status);
+  const rows = await res.json();
+  if(!rows.length || rows[0].payload === null) return null;
+  const p = rows[0].payload;
+  // The column is jsonb, so what comes back is already parsed. The rest of the
+  // app works with JSON strings, so put it back into that shape.
+  return {value: typeof p === 'string' ? p : JSON.stringify(p)};
+}
+
+async function cloudSet(key, value){
+  const id = getSyncId() + ':' + key;
+  const url = SUPABASE_URL + '/rest/v1/app_data';
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: 'Bearer ' + SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+      Prefer: 'resolution=merge-duplicates'
+    },
+    // value is a JSON string; parse it so it lands as real jsonb rather than a
+    // string-wrapped blob. Anything unparseable is stored as-is.
+    body: JSON.stringify({
+      id,
+      payload: (function(){ try{ return JSON.parse(value); }catch(e){ return value; } })(),
+      updated_at: new Date().toISOString()
+    })
+  });
+  if(!res.ok) throw new Error('cloud set ' + res.status);
+  return {value};
+}
+
+const appStorage = (function(){
+  const hasArtifactStorage = (typeof window !== 'undefined')
+    && window.storage
+    && typeof window.storage.get === 'function';
+
+  if(hasArtifactStorage){
+    return {
+      kind: 'artifact',
+      /* This host REJECTS a key that has never been written ("Key not found"),
+         while everywhere else in the app a missing key is simply null. Left as
+         it was, the very first read of a fresh month threw, and the throw took
+         the whole load down with it. */
+      get: (key, shared) => Promise.resolve(window.storage.get(key, shared)).catch(() => null),
+      set: (key, value, shared) => window.storage.set(key, value, shared),
+      // Nothing is queued on this host, so there is never anything unsent.
+      unsentKeys: () => [],
+      flushUnsent: () => Promise.resolve(0)
+    };
+  }
+
+  const localGet = (key) => {
+    const v = localStorage.getItem(key);
+    // Matching window.storage: a missing key comes back null, and a present
+    // one arrives wrapped as {value}.
+    return v === null ? null : {value: v};
+  };
+  const localSet = (key, value) => {
+    localStorage.setItem(key, value);
+    return {value};
+  };
+
+  /* Work saved here that the server has not accepted. Without this mark the
+     next start reads the server's older copy straight over the top of it and
+     the work is gone with nothing said. */
+  const dirtyKey = (key) => key + ':unsent';
+  const stashKey = (key) => key + ':before-sync';
+  const isDirty  = (key) => { try{ return localStorage.getItem(dirtyKey(key)) === '1'; }catch(e){ return false; } };
+  const setDirty = (key, on) => {
+    try{ on ? localStorage.setItem(dirtyKey(key), '1') : localStorage.removeItem(dirtyKey(key)); }catch(e){}
+  };
+
+  return {
+    kind: 'cloud',
+    async get(key){
+      // Cloud is the source of truth across devices, but a network hiccup must
+      // not look like "no data" — fall back to the local copy instead.
+      try{
+        const remote = await cloudGet(key);
+        if(remote){
+          const local = localGet(key);
+          const differs = !local || local.value !== remote.value;
+
+          if(differs && local && isDirty(key)){
+            /* This device holds work the server never took, and the server
+               holds something else. Dropping either one costs somebody a
+               session, so neither is dropped: this device keeps its own, the
+               server's copy is set aside under its own name, and the person is
+               told now rather than discovering it weeks later. */
+            try{ localSet(stashKey(key), remote.value); }catch(e){}
+            syncConflicts.push(key);
+            return local;
+          }
+
+          /* Taking the server's copy over the local one is normal and right,
+             but the copy being replaced is kept for one round regardless. It
+             costs a little room and it is the difference between a scare and a
+             loss. */
+          if(differs && local){
+            try{ localSet(stashKey(key), local.value); }catch(e){}
+          }
+          try{ localSet(key, remote.value); }catch(e){}
+          setDirty(key, false);
+          return remote;
+        }
+        // Nothing in the cloud yet: adopt whatever this device already has so
+        // existing local data survives the switch to syncing.
+        const local = localGet(key);
+        if(local){
+          cloudSet(key, local.value).then(()=>setDirty(key, false)).catch(()=>{});
+        }
+        return local;
+      }catch(e){
+        console.warn('Cloud read failed, using local copy', e);
+        cloudStatus(false);
+        return localGet(key);
+      }
+    },
+    async set(key, value){
+      // Write locally first so the app never loses an edit to a dropped
+      // connection, then push. A failed push is reported, not thrown, so the
+      // user's work still lands on this device.
+      let localOk = true;
+      try{ localSet(key, value); }catch(e){ localOk = false; }
+      // Marked before the attempt and cleared only once the server has it.
+      setDirty(key, true);
+      try{
+        const r = await cloudSet(key, value);
+        cloudStatus(true);
+        setDirty(key, false);
+        return r;
+      }catch(e){
+        console.warn('Cloud write failed, kept locally', e);
+        cloudStatus(false);
+        if(localOk) return {value};
+        throw e;
+      }
+    },
+    unsentKeys(){
+      const out = [];
+      try{
+        for(let i = 0; i < localStorage.length; i++){
+          const k = localStorage.key(i);
+          if(k && k.endsWith(':unsent') && localStorage.getItem(k) === '1'){
+            out.push(k.replace(/:unsent$/, ''));
+          }
+        }
+      }catch(e){}
+      return out;
+    },
+
+    /* A mark left by a failed write was only ever cleared by saving that same
+       thing again, so a minute without signal could leave the banner up for
+       days while the work sat here unsent. This pushes every marked key once.
+       One failure stops the run: if the server cannot be reached the rest will
+       fail too, and the marks are the thing protecting the work. */
+    async flushUnsent(){
+      let sent = 0;
+      for(const key of appStorage.unsentKeys()){
+        const local = localGet(key);
+        // Marked, but there is nothing here to send. The mark means nothing.
+        if(!local){ setDirty(key, false); continue; }
+        try{
+          await cloudSet(key, local.value);
+          setDirty(key, false);
+          sent++;
+        }catch(e){
+          console.warn('Retry failed, mark kept', key, e);
+          return sent;
+        }
+      }
+      if(sent) cloudStatus(true);
+      return sent;
+    }
+  };
+})();
+
+/* Keys where this device and the server disagreed at start-up. */
+const syncConflicts = [];
+
+/* Said plainly and once, at the top of the screen. The alternative is finding
+   out that a session vanished some days later, when nothing can be done. */
+function reportSyncTrouble(){
+  const unsent = appStorage.unsentKeys ? appStorage.unsentKeys() : [];
+  const bar = document.getElementById('cloudBanner');
+  if(!bar) return;
+  // Runs again after a retry, so it has to be able to take the mark DOWN too.
+  if(!syncConflicts.length && !unsent.length){ bar.style.display = 'none'; return; }
+  bar.style.display = '';
+  bar.textContent = syncConflicts.length
+    ? 'This device had work the server never received, and the server had something different. ' +
+      'What you are looking at is this device\'s copy. Take a backup now, then open the other device and check it.'
+    : 'Some work has not reached the server yet. Stay on this device until the mark at the top clears, ' +
+      'or take a backup before opening another one.';
+}
+
+/* At start-up, and again whenever the connection comes back. Without the second
+   one the banner stays up until something is saved by hand, which reads as
+   "still broken" long after it has been fixed. */
+function retryUnsent(){
+  if(!appStorage.flushUnsent) return;
+  appStorage.flushUnsent().then(n => { if(n) reportSyncTrouble(); }).catch(()=>{});
+}
+window.addEventListener('online', retryUnsent);
+
+// Shows a small banner when the device is working offline, so a long stretch of
+// unsynced edits can't go unnoticed.
+let cloudOnline = true;
+function cloudStatus(ok){
+  if(ok === cloudOnline) return;
+  cloudOnline = ok;
+  const el = document.getElementById('cloudBanner');
+  if(el) el.style.display = ok ? 'none' : 'block';
+}
+
+/* ---- keys ------------------------------------------------------------- */
+const K_BOARD  = 'bbyu-board';    // shared: the month's notes
+const K_SHARED = 'bbyu-shared';   // the day: errands, ticks, diary, challenges
+const K_PEOPLE = 'bbyu-people';   // shared: the two names
+const K_TALKS  = 'bbyu-talks';    // 쀼톡, one per week, keyed by its Monday
+const K_COLORS = 'bbyu-colors';   // the five colours, by slot name
+/* The two per-person day stores. Nothing writes to them any more — the ticks
+   are no longer told apart by person — but they are still read once, so a
+   day already ticked is not lost. */
+const kDaily = who => 'bbyu-daily-' + who;
+const ME_KEY = 'bbyu-me';         // local only: which of the two this device is
+
+/* ---- state ------------------------------------------------------------
+   A month is a list of notes in the order they were written. A note is a name
+   in brackets, an optional colour, and lines that are either big or small:
+
+     {id, name:'아젠다2', color:'00E5FF',
+      lines:[{s:false, t:'인스타는 밤에만', done:false}, ...]}
+
+   `name` is kept exactly as it was typed so the text round-trips; the tier —
+   which decides the two font sizes — is read off it. */
+let board  = {};                  // {'2610': [note, ...]}
+let shared = {};                  // {'261025': {sched[], out, pm, diary[], chal[]}}
+let talks  = {};                  // {'261026': {good[], better[], etc[]}} by Monday
+let colors = {};                  // {'쀼훈':'F2FF00', ...}, falling back to the defaults
+let people = {a:'령', b:'동'};   // the wife, then the husband — the 숙제 block uses the same two
+let me = 'a';
+let viewMonth = '';               // YYMM being looked at
+let pane = 'board';
+
+const WHO = ['a', 'b'];
+const pad2 = n => String(n).padStart(2, '0');
+const ymd = d => String(d.getFullYear()).slice(2) + pad2(d.getMonth()+1) + pad2(d.getDate());
+const ym  = d => String(d.getFullYear()).slice(2) + pad2(d.getMonth()+1);
+const todayCode = () => ymd(new Date());
+const thisMonth = () => ym(new Date());
+const monthOf = code => String(code).slice(0, 4);
+const uid = () => 'n_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s){ return escapeHtml(s); }
+
+/* A date code back into a Date, for weekday and grid maths. */
+function dateFromCode(code){
+  const s = String(code);
+  return new Date(2000 + parseInt(s.slice(0,2),10), parseInt(s.slice(2,4),10) - 1, parseInt(s.slice(4,6),10));
+}
+/* Monday first, like every other calendar in these two apps. */
+const DOW = ['월','화','수','목','금','토','일'];
+function dowIndex(d){ return (d.getDay() + 6) % 7; }
+
+/* =========================================================================
+   Loading and saving. Each key is read and written on its own, which is what
+   keeps one person's writes off the other's data.
+   ========================================================================= */
+function parse(res, fallback){
+  try{ return res ? JSON.parse(res.value) : fallback; }catch(e){ return fallback; }
+}
+
+/* One key failing must not take the others with it. `Promise.all` rejects on
+   the first failure and throws away every value that did arrive — which is how
+   a single unreadable key left the whole board blank until something else
+   happened to redraw it. Each read gets a catch of its own. */
+function safeGet(key){
+  return Promise.resolve(appStorage.get(key)).catch(e => {
+    console.warn('Could not read ' + key, e);
+    return null;
+  });
+}
+
+async function loadAll(){
+  const [b, s, p, t, cl, da, db] = await Promise.all([
+    safeGet(K_BOARD), safeGet(K_SHARED), safeGet(K_PEOPLE), safeGet(K_TALKS),
+    safeGet(K_COLORS), safeGet(kDaily('a')), safeGet(kDaily('b'))
+  ]);
+  board  = parse(b, {});
+  shared = parse(s, {});
+  talks  = parse(t, {});
+  colors = Object.assign({}, DEFAULT_COLORS, parse(cl, {}));
+  people = Object.assign({a:'령', b:'동'}, parse(p, {}));
+  migrateDays(parse(da, {}), parse(db, {}));
+  try{ me = localStorage.getItem(ME_KEY) || 'a'; }catch(e){ me = 'a'; }
+  if(WHO.indexOf(me) === -1) me = 'a';
+}
+
+/* The day used to be two records, one per person, each holding a morning tick
+   and an evening choice. It is one record now and the two are no longer told
+   apart, so a day either of them ticked counts as ticked. Read once, never
+   written again — the old keys are left where they are rather than deleted,
+   in case a backup from before this change is restored. */
+function migrateDays(a, b){
+  Object.keys(shared).forEach(code => { shared[code] = normDay(shared[code]); });
+  [a, b].forEach(src => {
+    Object.keys(src || {}).forEach(code => {
+      const e = src[code] || {};
+      if(!e.am && !e.pm) return;
+      const s = normDay(shared[code]);
+      if(e.am) s.out = s.out || 'O';
+      if(e.pm === 'input'    && !s.inp) s.inp = 'O';
+      if(e.pm === 'exercise' && !s.ex)  s.ex  = 'O';
+      shared[code] = s;
+    });
+  });
+}
+
+/* Every shape this record has ever had, read into the one it has now. The old
+   `note` was a single paragraph; the diary is a list, so it becomes its first
+   line. `challenge` and `eatout` are gone and are simply dropped. */
+function normDay(raw){
+  const s = raw || {};
+  const diary = Array.isArray(s.diary) ? s.diary.slice()
+    : (String(s.note || '').trim() ? [String(s.note).trim()] : []);
+  /* The three were a tick and a choice between two; they are three written
+     lines now, because what was done matters as much as that it was. A day
+     ticked under the old shape keeps an O, which is all it ever said. */
+  const txt = v => (typeof v === 'string') ? v : '';
+  return {
+    sched: Array.isArray(s.sched) ? s.sched.slice() : [],
+    out:   typeof s.out === 'string' ? s.out : (s.out ? 'O' : ''),
+    inp:   txt(s.inp) || (s.pm === 'input'    ? 'O' : ''),
+    ex:    txt(s.ex)  || (s.pm === 'exercise' ? 'O' : ''),
+    diary: diary,
+    chal:  Array.isArray(s.chal) ? s.chal.slice() : []
+  };
+}
+
+/* The three lines of the day, in the order they are asked about. The colour
+   each one fills its square with lives in COLOR_SLOTS, which Options can
+   change; it is looked up when the square is drawn rather than kept here. */
+const DAY_MARKS = [
+  {key: 'out', label: 'OutP (C.S.)'},
+  {key: 'inp', label: 'InP'},
+  {key: 'ex',  label: 'Ex.'}
+];
+const markDone = (s, k) => !!String(s[k] || '').trim();
+
+const saveBoard  = () => appStorage.set(K_BOARD,  JSON.stringify(board));
+const saveShared = () => appStorage.set(K_SHARED, JSON.stringify(shared));
+const saveTalks  = () => appStorage.set(K_TALKS,  JSON.stringify(talks));
+const saveColors = () => appStorage.set(K_COLORS, JSON.stringify(colors));
+const savePeople = () => appStorage.set(K_PEOPLE, JSON.stringify(people));
+
+/* Reading helpers that never write — a month or a day with nothing in it yet
+   comes back as an empty shape rather than being created on sight. */
+function notesOf(mm){ return Array.isArray(board[mm]) ? board[mm] : []; }
+function sharedOf(code){ return normDay(shared[code]); }
+/* A week is named by the Monday it starts on. */
+function weekKey(code){
+  const d = dateFromCode(code);
+  return ymd(new Date(d.getFullYear(), d.getMonth(), d.getDate() - dowIndex(d)));
+}
+function talkOf(key){
+  const t = talks[key] || {};
+  return {
+    good:   Array.isArray(t.good)   ? t.good.slice()   : [],
+    better: Array.isArray(t.better) ? t.better.slice() : [],
+    etc:    Array.isArray(t.etc)    ? t.etc.slice()    : []
+  };
+}
+function talkEmpty(t){ return !t.good.length && !t.better.length && !t.etc.length; }
+
+/* =========================================================================
+   Panes
+   ========================================================================= */
+function setPane(p){
+  pane = p;
+  document.getElementById('paneBoard').style.display = (p === 'board') ? '' : 'none';
+  document.getElementById('paneCal').style.display   = (p === 'cal')   ? '' : 'none';
+  const dots = document.getElementById('paneDots').children;
+  dots[0].classList.toggle('on', p === 'board');
+  dots[1].classList.toggle('on', p === 'cal');
+}
+
+/* Options is a box over the board, not a pane of its own — so the month row
+   never has to hide anything and there is always a way back out. */
+function toggleOptions(){
+  const ov = document.getElementById('optOverlay');
+  if(ov.classList.contains('show')){ ov.classList.remove('show'); return; }
+  renderOptions();
+  ov.classList.add('show');
+}
+
+/* The board and the month are switched by pushing the screen sideways. There
+   are only two, so either direction does the same thing — which is the whole
+   reason there is no control for it. Lifted from Time, including the rule
+   that a drag more vertical than horizontal is a scroll and not a swipe. */
+(function(){
+  const TRIGGER = 50;
+  let x0 = 0, y0 = 0, live = false;
+  const view = () => document.querySelector('.wrap');
+  document.addEventListener('touchstart', e => {
+    const v = view(), t = e.touches[0];
+    live = !!(v && t && v.contains(e.target));
+    if(live){ x0 = t.clientX; y0 = t.clientY; }
+  }, {passive:true});
+  document.addEventListener('touchmove', e => {
+    if(!live) return;
+    const t = e.touches[0];
+    if(!t) return;
+    const dx = t.clientX - x0, dy = t.clientY - y0;
+    if(Math.abs(dy) > Math.abs(dx)){ live = false; return; }
+    if(Math.abs(dx) > TRIGGER){
+      setPane(pane === 'cal' ? 'board' : 'cal');
+      live = false;
+    }
+  }, {passive:true});
+  document.addEventListener('touchend', () => { live = false; }, {passive:true});
+
+  /* The same push, made with a mouse. A machine with no touch screen had no
+     way at all to reach the second screen, which is why the dots above exist
+     as well — a drag cannot be seen, and nothing else said there was more
+     than one screen.
+     Only a mouse: a finger already fires the handlers above, and taking the
+     pointer events too would switch twice on one swipe. */
+  let mx = 0, my = 0, mlive = false;
+  const typing = t => !!(t && (t.closest('input, textarea, .modal-overlay')));
+  document.addEventListener('pointerdown', e => {
+    if(e.pointerType !== 'mouse' || e.button !== 0) return;
+    const v = view();
+    mlive = !!(v && v.contains(e.target)) && !typing(e.target);
+    if(mlive){ mx = e.clientX; my = e.clientY; }
+  });
+  document.addEventListener('pointermove', e => {
+    if(!mlive || e.pointerType !== 'mouse') return;
+    const dx = e.clientX - mx, dy = e.clientY - my;
+    if(Math.abs(dy) > Math.abs(dx)){ mlive = false; return; }
+    if(Math.abs(dx) > TRIGGER){
+      setPane(pane === 'cal' ? 'board' : 'cal');
+      mlive = false;
+    }
+  });
+  document.addEventListener('pointerup', () => { mlive = false; });
+})();
+
+function stepMonth(delta){
+  const y = 2000 + parseInt(viewMonth.slice(0,2), 10);
+  const m = parseInt(viewMonth.slice(2,4), 10) - 1;
+  viewMonth = ym(new Date(y, m + delta, 1));
+  renderAll();
+}
+
+function renderMonthLabel(){
+  const y = 2000 + parseInt(viewMonth.slice(0,2), 10);
+  const m = parseInt(viewMonth.slice(2,4), 10);
+  document.getElementById('monthLabel').textContent = y + '. ' + m;
+}
+
+/* =========================================================================
+   The board's text format.
+
+     <쀼리뷰_10월>          written into the backup so a downloaded file says
+                            which month it holds. Never shown in the app's own
+                            editors — the month is already on screen there.
+     [쀼훈]                 starts a note. The name decides the tier, and a
+                            trailing number is only there to tell two notes of
+                            the same tier apart: 쀼훈, 쀼훈2, 쀼훈3.
+     (00E5FF)               that note's paper. Also backup-only: in the app the
+                            colour is a swatch, the way Options sets the rating
+                            colours in the Voca app.
+     디톡스하자             a big line
+     -인스타 넘 많이한다    a small line
+
+   Inside [숙제] the same two marks mean something else, because it is a list
+   of tasks rather than a note:
+
+     령                     whose tasks follow
+     -부동산 공부해서 보고  one task
+     x-구렁이 금주 확인     one task, done
+
+   Parsing is forgiving — a header or a colour line is read if it is there.
+   Writing is not: each of the two serialisations below puts in exactly what
+   its reader needs and nothing else.
+   ========================================================================= */
+const TIER_NAMES = {'쀼훈':1, '숙제':3};   // anything else is the middle tier
+/* The categories the board always offers, top to bottom. A month missing one
+   of these is offered a + for it rather than simply not having it. */
+const TIER_ORDER = ['쀼훈', '아젠다', '크리에이티브 아젠다'];
+const HW_NAME = '숙제';
+/* The paper each kind of note starts on, so the three of them are told apart
+   at a glance before anyone has picked a colour. Taken from the four the
+   other two apps already use — the sample data was written on 00E5FF, which
+   is one of them. A note given a colour of its own keeps it; 숙제 has no
+   paper to colour. */
+/* The five colours the app is set up with, and the names they are kept and
+   written under. The first three are the paper a kind of note starts on; the
+   last two are the day's marks in the grid, which borrow the first. All five
+   can be changed in Options and all five travel with the data. */
+const COLOR_SLOTS = [
+  {key: '쀼훈',            label: '쀼훈',             def: 'F2FF00'},
+  {key: '아젠다',          label: '아젠다',           def: '00E5FF'},
+  {key: '크리에이티브 아젠다', label: '크리에이티브 아젠다', def: '2CE17A'},
+  {key: 'OutP',           label: 'OutP (C.S.)',     def: 'F2FF00'},
+  {key: 'InP',            label: 'InP',             def: '00E5FF'},
+  {key: 'Ex.',            label: 'Ex.',             def: 'FF4602'}
+];
+const DEFAULT_COLORS = (() => {
+  const o = {};
+  COLOR_SLOTS.forEach(s => { o[s.key] = s.def; });
+  return o;
+})();
+const hex6 = v => /^[0-9a-fA-F]{6}$/.test(String(v || '')) ? String(v).toUpperCase() : '';
+function colorSlot(key){ return hex6(colors[key]) || DEFAULT_COLORS[key] || ''; }
+function colorOf(note){ return note.color || colorSlot(baseName(note.name)) || ''; }
+/* The square a day's mark is drawn as, one per line of the day. */
+const markColor = key => colorSlot({out:'OutP', inp:'InP', ex:'Ex.'}[key]);
+/* The two of them, in the order they are written. The husband is 동, the wife
+   is 령; these are the only names the 숙제 block uses. */
+const HW_WHO = ['령', '동'];
+
+/* The + every one of these apps draws: two bars in a 24px box, no wording. */
+const PLUS_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+  '<rect x="10.8" y="3" width="2.4" height="18"/>' +
+  '<rect x="3" y="10.8" width="18" height="2.4"/></svg>';
+
+/* The bracket name with its trailing number taken off, which is what says
+   whether a note is the motto, an agenda or the task list. */
+function baseName(name){ return String(name || '').replace(/\s*\d+\s*$/, '').trim(); }
+function tierOf(name){ return TIER_NAMES[baseName(name)] || 2; }
+function isHomework(name){ return baseName(name) === HW_NAME; }
+
+/* One line of a note. The two marks may come in either order, so `x-...` and
+   `-x...` both mean a small line that is done. An empty one — the `-` the
+   blank form leaves waiting — is not a line at all. */
+function parseLine(line){
+  let t = line, done = false, small = false;
+  for(let i = 0; i < 2; i++){
+    if(/^[xX]/.test(t) && !done){ done = true; t = t.slice(1); continue; }
+    if(t.charAt(0) === '-' && !small){ small = true; t = t.slice(1); continue; }
+  }
+  t = t.trim();
+  /* A deadline is written on the end as @261103, so a line that goes out as
+     text and comes back keeps the date it was given. */
+  let due = '';
+  const m = /\s*@(\d{6})\s*$/.exec(t);
+  if(m){ due = m[1]; t = t.slice(0, m.index).trim(); }
+  return t ? {s: small, t: t, done: done, due: due} : null;
+}
+
+function parseBoardText(text){
+  const notes = [];
+  let cur = null;
+  String(text || '').split('\n').forEach(raw => {
+    const line = raw.replace(/\r$/, '').trim();
+    if(!line) return;
+    if(/^<.*>$/.test(line)) return;                      // the month header
+    const head = /^\[(.+?)\]$/.exec(line);
+    if(head){
+      cur = {id: uid(), name: head[1].trim(), color: '', lines: []};
+      notes.push(cur);
+      return;
+    }
+    if(!cur){                                            // lines before any [name]
+      cur = {id: uid(), name: '아젠다', color: '', lines: []};
+      notes.push(cur);
+    }
+    const col = /^\(#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})\)$/.exec(line);
+    if(col && !cur.lines.length){ cur.color = col[1].toLowerCase(); return; }
+    const l = parseLine(line);
+    if(l) cur.lines.push(l);
+  });
+  return notes;
+}
+
+/* One note's worth of lines and nothing else. The name and the colour are not
+   in the box it is read from — the title says which note this is and the
+   swatch sets the paper — so anything that looks like either is dropped
+   rather than taken for content. */
+function parseLines(text){
+  const out = [];
+  String(text || '').split('\n').forEach(raw => {
+    const line = raw.replace(/\r$/, '').trim();
+    if(!line) return;
+    if(/^<.*>$/.test(line) || /^\[(.+?)\]$/.test(line)) return;
+    if(/^\(#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})\)$/.test(line)) return;
+    const l = parseLine(line);
+    if(l) out.push(l);
+  });
+  return out;
+}
+
+/* The four marks a line may carry. Escaped first, so nothing in the text can
+   introduce markup of its own, and only then are the patterns put back as
+   tags. A link is only made when it points somewhere a browser should follow;
+   anything else is left as the plain text it was. */
+/* The same wording with its marks taken off, for the places too small to
+   draw them — a calendar cell shows `**장보기**` as 장보기, not as six extra
+   characters of punctuation it has no room for. */
+function stripMd(raw){
+  return String(raw == null ? '' : raw)
+    .replace(RE_LINK, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(RE_U1, '$1$2')
+    .replace(/~~([^~]+)~~/g, '$1');
+}
+
+/* One underscore on each side also underlines, because that is what gets
+   typed — but only against a space or a bracket, so `snake_case` is left as
+   it was written. */
+const RE_LINK = /\[([^\]]+)\]\(([^)\s]+)\)/g;
+const RE_U1   = /(^|[\s(\[])_([^_\n]+)_(?=$|[\s).,!?\]])/g;
+
+function mdEmphasis(s){
+  return s
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/__([^_]+)__/g, '<u>$1</u>')
+    .replace(RE_U1, '$1<u>$2</u>')
+    .replace(/~~([^~]+)~~/g, '<s>$1</s>');
+}
+
+function mdToHtml(raw){
+  let s = escapeHtml(raw);
+  /* The links come out first and go back in last. Left in place, the marks
+     below ran over the addresses too: an underscore inside a URL turned into
+     an <u> in the middle of the href and the link stopped working. */
+  const links = [];
+  s = s.replace(RE_LINK, (m, t, u) => {
+    if(!/^(https?:|mailto:)/i.test(u)) return m;
+    links.push({t: t, u: u});
+    return '\u0000' + (links.length - 1) + '\u0000';
+  });
+  s = mdEmphasis(s);
+  return s.replace(/\u0000(\d+)\u0000/g, (m, i) => {
+    const l = links[+i];
+    return '<a href="' + l.u + '" target="_blank" rel="noopener">' +
+      mdEmphasis(l.t) + '</a>';
+  });
+}
+
+function lineToText(l){
+  return (l.done ? 'x' : '') + (l.s ? '-' : '') + l.t + (l.due ? ' @' + l.due : '');
+}
+
+/* How many days from today to that date — 0 is the day itself, and a date
+   already past comes back negative. */
+function daysUntil(code){
+  const a = dateFromCode(todayCode()), b = dateFromCode(code);
+  return Math.round((b - a) / 86400000);
+}
+function dueLabel(code){
+  const n = daysUntil(code);
+  return n === 0 ? 'D-day' : (n > 0 ? 'D-' + n : 'D+' + (-n));
+}
+
+/* Every task in the month that falls due on a given day, as the wording the
+   calendar shows. Worked out when the day is drawn rather than written into
+   the day's own record: a deadline that moves would otherwise leave the old
+   day still claiming it. */
+function duesOn(code){
+  const out = [];
+  Object.keys(board).forEach(mm => {
+    notesOf(mm).forEach(note => {
+      if(!isHomework(note.name)) return;
+      note.lines.forEach(l => {
+        if(l.s && l.due === code && !l.done) out.push(l.t + ' D-day');
+      });
+    });
+  });
+  return out;
+}
+
+/* What one note's editor shows: its lines. Nothing else is editable there. */
+function linesToText(note){ return note.lines.map(lineToText).join('\n'); }
+
+/* The whole month, where the names ARE the content: without them there would
+   be no saying which lines belong to which note. */
+function boardToEditText(mm){
+  const ns = sortedNotes(mm);
+  return ns.length
+    ? ns.map(n => '[' + n.name + ']\n' + linesToText(n)).join('\n\n')
+    : BLANK_FORM;
+}
+
+/* =========================================================================
+   THE TEXT FORM
+
+   One format for everything: what the month editor shows, what a backup
+   holds, and what the data editor in Options reads and writes. A backup used
+   to be four lines of JSON with a readable copy underneath — unreadable in a
+   text editor, which is the one place a backup gets opened. There is only the
+   readable form now, and it is what gets read back in.
+
+   Blocks stack in kind order, not by date: every review first, then every
+   쀼톡, then every day.
+
+     <이름>            the two of them
+     <쀼리뷰_26년 10월>  a month's board
+     <쀼톡_261019>      a week, by the Monday it starts on
+     <쀼일_261026>      one day
+   ========================================================================= */
+const RE_HEAD = /^<([^_>]+)(?:_(.+))?>$/;
+
+/* The year is written out only to keep a file read in another year from
+   guessing; `<쀼리뷰_10월>` is still understood, against the file's own date. */
+function monthHead(mm){
+  return '<쀼리뷰_' + mm.slice(0,2) + '년 ' + parseInt(mm.slice(2,4), 10) + '월>';
+}
+function parseMonthHead(arg, baseYY){
+  const full = /^(\d{2})년\s*(\d{1,2})월$/.exec(arg);
+  if(full) return full[1] + pad2(+full[2]);
+  const bare = /^(\d{1,2})월$/.exec(arg);
+  if(bare) return baseYY + pad2(+bare[1]);
+  if(/^\d{4}$/.test(arg)) return arg;
+  return null;
+}
+
+function noteToFullText(note){
+  return '[' + note.name + ']\n' +
+    (note.color ? '(' + note.color.toUpperCase() + ')\n' : '') +
+    note.lines.map(lineToText).join('\n');
+}
+function boardToFullText(mm){
+  /* Sorted, so the file reads top to bottom the way the board does. */
+  return monthHead(mm) + '\n\n' +
+    sortedNotes(mm).map(noteToFullText).join('\n\n');
+}
+
+function talkToFullText(key){
+  return '<쀼톡_' + key + '>\n\n' + talkToText(talkOf(key));
+}
+
+/* A day, section by section, leaving out whatever is empty. */
+const DAY_SECTIONS = [
+  {key: 'sched', head: '스케줄'},
+  {key: 'chal',  head: '도전'},
+  {key: 'diary', head: '일기'}
+];
+function dayToFullText(code){
+  const s = sharedOf(code);
+  const parts = [];
+  if(s.sched.length) parts.push('[스케줄]\n' + s.sched.join('\n'));
+  if(DAY_MARKS.some(m => markDone(s, m.key))){
+    /* A blank that was left blank keeps its line — the three read as a set —
+       but without a space trailing off the end of it. */
+    parts.push('[체크]\n' + DAY_MARKS.map(m =>
+      (m.label + ': ' + s[m.key]).replace(/\s+$/, '')).join('\n'));
+  }
+  if(s.chal.length)  parts.push('[도전]\n' + s.chal.join('\n'));
+  if(s.diary.length) parts.push('[일기]\n' + s.diary.join('\n'));
+  return parts.length ? '<쀼일_' + code + '>\n\n' + parts.join('\n\n') : '';
+}
+function dayEmpty(code){ return !dayToFullText(code); }
+
+/* The five colours, written at the head of the data so they travel with it
+   and can be changed in the editor like anything else. */
+function colorsToFullText(){
+  return '<색>\n\n' + COLOR_SLOTS.map(s =>
+    s.label + ': ' + colorSlot(s.key)).join('\n');
+}
+function parseColorText(body){
+  const out = {};
+  String(body || '').split('\n').forEach(raw => {
+    const line = raw.trim();
+    const at = line.indexOf(':');
+    if(at === -1) return;
+    const label = line.slice(0, at).trim();
+    const hit = COLOR_SLOTS.find(s => s.label === label || s.key === label);
+    const v = hex6(line.slice(at + 1).trim().replace('#', ''));
+    if(hit && v) out[hit.key] = v;
+  });
+  return out;
+}
+
+function peopleToFullText(){
+  return '<이름>\n\n' + (people.a || '령') + '\n' + (people.b || '동');
+}
+
+/* Everything, or the part of it a filter asks for. `want` names the kinds,
+   `from`/`to` are day codes and may be empty. */
+function allToFullText(want, from, to){
+  const w = want || {review: true, talk: true, day: true};
+  const inRange = code => (!from || code >= from) && (!to || code <= to);
+  const blocks = [];
+
+  if(w.review){
+    Object.keys(board).filter(mm => notesOf(mm).length).sort()
+      /* A month is in range if it OVERLAPS it — its last day is not before
+         the start and its first is not after the end. Testing the last day
+         against both ends dropped October from 10/1–10/20. */
+      .filter(mm => (!from || mm + '31' >= from) && (!to || mm + '01' <= to))
+      .forEach(mm => blocks.push(boardToFullText(mm)));
+  }
+  if(w.talk){
+    Object.keys(talks).filter(k => !talkEmpty(talkOf(k))).sort()
+      .filter(inRange).forEach(k => blocks.push(talkToFullText(k)));
+  }
+  if(w.day){
+    Object.keys(shared).filter(c => !dayEmpty(c)).sort()
+      .filter(inRange).forEach(c => blocks.push(dayToFullText(c)));
+  }
+  return blocks.join('\n\n\n');
+}
+
+/* ---- reading it back ---------------------------------------------------
+   Only the kinds present in the text are touched, and within a kind only the
+   months, weeks and days it names: a file holding one month must not empty
+   the other eleven.
+   ----------------------------------------------------------------------- */
+function parseAllText(text, baseYY){
+  const yy = baseYY || todayCode().slice(0,2);
+  const out = {colors: null, people: null, board: {}, talks: {}, shared: {}};
+  let kind = null, arg = '', buf = [];
+
+  const flush = () => {
+    if(!kind) return;
+    const body = buf.join('\n');
+    if(kind === '색'){
+      const c = parseColorText(body);
+      if(Object.keys(c).length) out.colors = c;
+    } else if(kind === '이름'){
+      const names = body.split('\n').map(s => s.trim()).filter(Boolean);
+      if(names.length) out.people = {a: names[0], b: names[1] || '동'};
+    } else if(kind === '쀼리뷰'){
+      const mm = parseMonthHead(arg, yy);
+      if(mm) out.board[mm] = parseBoardText(body);
+    } else if(kind === '쀼톡'){
+      if(/^\d{6}$/.test(arg)) out.talks[arg] = parseTalkText(body);
+    } else if(kind === '쀼일'){
+      if(/^\d{6}$/.test(arg)) out.shared[arg] = parseDayText(body);
+    }
+    buf = [];
+  };
+
+  String(text || '').split('\n').forEach(raw => {
+    const line = raw.replace(/\r$/, '').trim();
+    const head = RE_HEAD.exec(line);
+    if(head){ flush(); kind = head[1].trim(); arg = (head[2] || '').trim(); return; }
+    if(kind) buf.push(raw.replace(/\r$/, ''));
+  });
+  flush();
+  return out;
+}
+
+/* One day's sections back into the record. */
+function parseDayText(body){
+  const s = {sched: [], out: '', inp: '', ex: '', chal: [], diary: []};
+  let sec = null;
+  String(body || '').split('\n').forEach(raw => {
+    const line = raw.trim();
+    if(!line) return;
+    const head = /^\[(.+?)\]$/.exec(line);
+    if(head){
+      const name = head[1].trim();
+      sec = (name === '체크') ? 'marks'
+          : (DAY_SECTIONS.find(x => x.head === name) || {}).key || null;
+      return;
+    }
+    if(sec === 'marks'){
+      const at = line.indexOf(':');
+      if(at === -1) return;
+      const label = line.slice(0, at).trim();
+      const hit = DAY_MARKS.find(m => m.label === label || m.key === label);
+      if(hit) s[hit.key] = line.slice(at + 1).trim();
+      return;
+    }
+    if(sec) s[sec].push(line);
+  });
+  return s;
+}
+
+/* The form the review starts from when a month has nothing in it yet. */
+const BLANK_FORM =
+  '[쀼훈]\n\n' +
+  '[아젠다]\n\n' +
+  '[크리에이티브 아젠다]\n\n' +
+  '[' + HW_NAME + ']\n' + HW_WHO[0] + '\n-\n' + HW_WHO[1] + '\n-';
+
+/* =========================================================================
+   PANE 1 — the board
+   ========================================================================= */
+/* Sorted so the top of the board is always the 쀼훈 and the foot the 숙제,
+   whatever order they were written in. Within a tier the written order
+   stands, which is what keeps 아젠다2 under 아젠다. */
+/* Tier first, then the order each NAME first appeared, then the order within
+   that name. Sorting on the raw index alone put a note added later at the end
+   of its tier, which split 아젠다 and 아젠다2 around 크리에이티브 아젠다 and
+   broke them into two rows. */
+function sortedNotes(mm){
+  const ns = notesOf(mm);
+  const first = {};
+  ns.forEach((n, i) => {
+    const b = baseName(n.name);
+    if(first[b] === undefined) first[b] = i;
+  });
+  return ns.slice()
+    .map((n, i) => ({n: n, i: i}))
+    .sort((a, b) =>
+      (tierOf(a.n.name) - tierOf(b.n.name)) ||
+      (first[baseName(a.n.name)] - first[baseName(b.n.name)]) ||
+      (a.i - b.i))
+    .map(x => x.n);
+}
+
+/* The name a new note of this tier should take: the first is bare, the rest
+   carry the next free number. */
+function nextName(mm, base){
+  let max = 0;
+  notesOf(mm).forEach(n => {
+    if(baseName(n.name) !== base) return;
+    const m = /(\d+)\s*$/.exec(n.name);
+    max = Math.max(max, m ? parseInt(m[1], 10) : 1);
+  });
+  return max ? base + (max + 1) : base;
+}
+
+function noteBodyHtml(note){
+  return note.lines.map(l =>
+    '<span class="' + (l.s ? 'pi-small' : 'pi-big') + '">' + mdToHtml(l.t) + '</span>'
+  ).join('');
+}
+
+/* The 숙제 note drawn as a list: a heading per person, then that person's
+   lines. A bare line names whoever the lines under it belong to; anything
+   before the first bare line belongs to no one and is shown first. */
+function homeworkHtml(note){
+  const groups = [];
+  let cur = {who: '', items: []};
+  groups.push(cur);
+  note.lines.forEach((l, i) => {
+    if(!l.s){ cur = {who: l.t, items: []}; groups.push(cur); return; }
+    cur.items.push({l: l, i: i});
+  });
+  return '<div class="hw-block">' + groups.map(g => {
+    if(!g.who && !g.items.length) return '';
+    return '<div class="hw-group">' +
+      (g.who ? '<div class="hw-who">' + escapeHtml(g.who) + '</div>' : '') +
+      g.items.map(it =>
+        '<div class="todo-row' + (it.l.done ? ' is-done' : '') + '">' +
+          '<button class="todo-check" aria-label="done"' +
+            ' onclick="toggleLine(\'' + note.id + '\',' + it.i + ')">' +
+            '<span class="todo-box"></span></button>' +
+          (hwEditKey === note.id + '|' + it.i
+            ? '<input type="text" class="todo-edit-input" value="' + escapeAttr(it.l.t) + '"' +
+                ' onkeydown="hwRenameKey(event,\'' + note.id + '\',' + it.i + ')"' +
+                ' onblur="hwRenameCommit(this,\'' + note.id + '\',' + it.i + ')"' +
+                ' aria-label="고쳐 쓰기">' +
+              /* Offered only while the task is open for rewording — a row of
+                 DEADLINE boxes down a finished list would be all anyone saw. */
+              '<button class="due-btn' + (it.l.due ? ' on' : '') + '"' +
+                ' onmousedown="event.preventDefault();"' +
+                ' onclick="openDuePicker(\'' + note.id + '\',' + it.i + ')">DEADLINE</button>'
+            : '<button class="todo-text" onclick="hwStartEdit(\'' + note.id + '\',' + it.i + ')">' +
+                mdToHtml(it.l.t) + '</button>' +
+              (it.l.due ? '<span class="due-tag' +
+                (daysUntil(it.l.due) < 0 ? ' over' : '') + '">' +
+                dueLabel(it.l.due) + '</span>' : '')) +
+        '</div>').join('') +
+      '<div class="hw-row"><button class="hw-add" aria-label="추가"' +
+        ' onclick="addHomework(\'' + note.id + '\',' +
+        JSON.stringify(g.who).replace(/"/g, '&quot;') + ')">' + PLUS_SVG + '</button></div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+/* One note: what is written on it, or — while it is open — the text itself
+   with its colour and a way to take it away. */
+function pinHtml(note){
+  const paper = colorOf(note);
+  const bg = paper ? ' style="background:#' + escapeAttr(paper) + ';"' : '';
+  if(noteEditId !== note.id){
+    return '<div class="pi pi-' + tierOf(note.name) + '" role="button" tabindex="0"' + bg +
+      ' onclick="openNote(\'' + note.id + '\')">' + noteBodyHtml(note) + '</div>';
+  }
+  return '<div class="pi pi-' + tierOf(note.name) + ' editing"' + bg + '>' +
+    '<textarea class="pi-edit" spellcheck="false"' +
+      ' oninput="noteTyping(this,\'' + note.id + '\')"' +
+      ' onkeydown="noteEditKey(event)"' +
+      ' aria-label="' + escapeAttr(note.name) + '">' +
+      escapeHtml(linesToText(note)) + '</textarea>' +
+    '<div class="pi-tools">' +
+      '<input type="color" value="#' + escapeAttr(paper || 'EDEDED') + '"' +
+        ' oninput="noteColorPick(this,\'' + note.id + '\')" aria-label="색">' +
+      '<button class="pi-tool" onclick="deleteNoteNow(this,\'' + note.id + '\')">삭제</button>' +
+      '<button class="pi-tool done" onclick="closeNote()" aria-label="완료">✓</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderBoard(){
+  const mm = viewMonth;
+  const notes = sortedNotes(mm);
+  const stack = document.getElementById('boardStack');
+
+  /* A category with nothing in it had no + of its own, because the + belonged
+     to a row of notes and there was no row — so a month that was missing the
+     creative agenda could never be given one. Each missing category now gets
+     a + of its own, in the middle and in that category's own paper colour, so
+     an empty month opens with one + per category rather than a single one
+     that writes the whole month at once. */
+  const missing = base => !notes.some(n => baseName(n.name) === base);
+  const startBtn = base =>
+    '<div class="start-row"><button class="add-btn" aria-label="추가"' +
+      ' style="color:#' + escapeAttr(colorSlot(base)) + ';"' +
+      ' onclick="addNote(' + JSON.stringify(base).replace(/"/g, '&quot;') + ')">' +
+      PLUS_SVG + '</button></div>';
+
+  /* Notes of one name go into one row, which is what lets 쀼훈 and 쀼훈2 stand
+     side by side; the + that adds one more follows that row. The homework is
+     not a note and gets neither. */
+  let html = '', open = false;
+  const closeRow = base => {
+    if(!open) return;
+    html += '</div><div class="add-row"><button class="add-btn" aria-label="추가"' +
+      ' onclick="addNote(' + JSON.stringify(base).replace(/"/g, '&quot;') + ')">' +
+      PLUS_SVG + '</button></div>';
+    open = false;
+  };
+
+  /* Walked in tier order, so a missing category's + stands where its notes
+     would have stood rather than being swept to the end. */
+  let at = 0;
+  TIER_ORDER.forEach(base => {
+    if(missing(base)){ closeRow(''); html += startBtn(base); return; }
+    while(at < notes.length && baseName(notes[at].name) === base){
+      const note = notes[at++];
+      if(!open){ html += '<div class="pi-row">'; open = true; }
+      html += pinHtml(note);
+    }
+    closeRow(base);
+  });
+
+  /* Whatever is left: the homework, and any name invented by hand. */
+  while(at < notes.length){
+    const note = notes[at++];
+    const base = baseName(note.name);
+    if(isHomework(note.name)){ closeRow(''); html += homeworkHtml(note); continue; }
+    const prev = notes[at - 2];
+    if(prev && baseName(prev.name) !== base) closeRow(baseName(prev.name));
+    if(!open){ html += '<div class="pi-row">'; open = true; }
+    html += pinHtml(note);
+  }
+  const last = notes[notes.length - 1];
+  if(last) closeRow(baseName(last.name));
+
+  /* The way to see and rewrite the whole month at once, bottom left — the
+     same thing, and the same wording, as the manual editor in Voca/Para. */
+  html += '<div class="board-foot"><button class="btn btn-ghost"' +
+    ' onclick="openBoardText()">Edit by txt manually</button></div>';
+  stack.innerHTML = html;
+}
+
+/* A task is reworded by pressing it, the way the to-do list in Time is
+   reworded — not by opening the note it lives in. */
+let hwEditKey = null;
+
+function hwStartEdit(noteId, idx){
+  const key = noteId + '|' + idx;
+  hwEditKey = (hwEditKey === key) ? null : key;
+  renderBoard();
+  const box = document.querySelector('#boardStack .todo-edit-input');
+  if(box){ box.focus(); box.select(); }
+}
+
+/* Enter keeps it, Escape drops it, and tapping elsewhere keeps it too — on a
+   phone that is how a box is left, and losing the wording there would be a
+   nasty surprise. */
+function hwRenameKey(ev, noteId, idx){
+  if(ev.key === 'Enter'){ ev.preventDefault(); hwRenameCommit(ev.target, noteId, idx); return; }
+  if(ev.key === 'Escape'){ ev.preventDefault(); hwEditKey = null; renderBoard(); }
+}
+
+async function hwRenameCommit(el, noteId, idx){
+  if(hwEditKey === null) return;              // already closed by Escape
+  hwEditKey = null;
+  const note = notesOf(viewMonth).find(n => n.id === noteId);
+  if(!note || !note.lines[idx]){ renderBoard(); return; }
+  const text = String(el.value || '').trim();
+  // Emptied, the task goes. There is no ✕ on these lines, so this is the only
+  // way to be rid of one without opening the whole note.
+  if(text) note.lines[idx].t = text;
+  else note.lines.splice(idx, 1);
+  renderBoard();
+  saveBoard().catch(() => {});
+}
+
+async function toggleLine(noteId, idx){
+  const note = notesOf(viewMonth).find(n => n.id === noteId);
+  if(!note || !note.lines[idx]) return;
+  note.lines[idx].done = !note.lines[idx].done;
+  renderBoard();                 // the mark goes on before the save, never after
+  saveBoard().catch(() => {});
+}
+
+/* A new task goes in under the heading it was added from, which is the line
+   after that person's last one — not at the end of the note. */
+async function addHomework(noteId, who){
+  const note = notesOf(viewMonth).find(n => n.id === noteId);
+  if(!note) return;
+  let at = note.lines.length, seen = !who;
+  for(let i = 0; i < note.lines.length; i++){
+    const l = note.lines[i];
+    if(!l.s){
+      if(seen){ at = i; break; }
+      if(l.t === who) seen = true;
+    }
+  }
+  note.lines.splice(at, 0, {s: true, t: '새 숙제', done: false, due: ''});
+  /* Opened for rewording where it stands rather than in a box over the
+     board — the same as every other list in these two panes. */
+  hwEditKey = noteId + '|' + at;
+  renderBoard();
+  const edit = document.querySelector('#boardStack .todo-edit-input');
+  if(edit){ edit.focus(); edit.select(); }
+  saveBoard().catch(() => {});
+}
+
+/* ---- a task's deadline ------------------------------------------------
+   A month at a time, stepped with the same arrows the board uses. Pressing a
+   day sets it; pressing the day already set clears it, which is the only way
+   back out and matches every other mark in these apps.
+   ----------------------------------------------------------------------- */
+let dueTarget = null;            // {noteId, idx}
+let dueMonth = null;             // the month the picker is showing
+
+function openDuePicker(noteId, idx){
+  const note = notesOf(viewMonth).find(n => n.id === noteId);
+  const line = note && note.lines[idx];
+  if(!line) return;
+  dueTarget = {noteId: noteId, idx: idx};
+  dueMonth = line.due ? monthOf(line.due) : viewMonth;
+  renderDuePicker();
+  document.getElementById('dueOverlay').classList.add('show');
+}
+
+function hideDue(){
+  document.getElementById('dueOverlay').classList.remove('show');
+  dueTarget = null;
+}
+
+function stepDueMonth(delta){
+  const y = 2000 + parseInt(dueMonth.slice(0,2), 10);
+  const m = parseInt(dueMonth.slice(2,4), 10) - 1;
+  dueMonth = ym(new Date(y, m + delta, 1));
+  renderDuePicker();
+}
+
+function renderDuePicker(){
+  if(!dueTarget) return;
+  const note = notesOf(viewMonth).find(n => n.id === dueTarget.noteId);
+  const line = note && note.lines[dueTarget.idx];
+  if(!line) return;
+
+  const y = 2000 + parseInt(dueMonth.slice(0,2), 10);
+  const m = parseInt(dueMonth.slice(2,4), 10) - 1;
+  const lead = dowIndex(new Date(y, m, 1));
+  const days = new Date(y, m + 1, 0).getDate();
+  const today = todayCode();
+
+  let grid = DOW.map(d => '<span class="due-dow">' + d + '</span>').join('');
+  for(let i = 0; i < lead; i++) grid += '<button class="off" tabindex="-1"></button>';
+  for(let day = 1; day <= days; day++){
+    const code = dueMonth + pad2(day);
+    grid += '<button class="' + (code === line.due ? 'on' : '') +
+      (code === today ? ' now' : '') + '"' +
+      ' onclick="setDue(\'' + code + '\')">' + day + '</button>';
+  }
+
+  document.getElementById('dueBox').innerHTML =
+    '<button class="modal-close" onclick="hideDue()" aria-label="Close">✕</button>' +
+    '<p class="modal-title">' + escapeHtml(line.t) + '</p>' +
+    '<div class="month-row" style="gap:var(--sp-3);">' +
+      '<button class="step-btn" onclick="stepDueMonth(-1)" aria-label="Previous month">' +
+        '<svg class="chev left" width="11" height="11" viewBox="0 0 24 24" aria-hidden="true">' +
+        '<path d="M7 3.5 L18.5 12 L7 20.5" fill="none" stroke="currentColor" stroke-width="4.2"' +
+        ' stroke-linecap="square" stroke-linejoin="miter"/></svg></button>' +
+      '<span class="month-label" style="font-size:var(--fs-body);">' +
+        y + '. ' + (m + 1) + '</span>' +
+      '<button class="step-btn" onclick="stepDueMonth(1)" aria-label="Next month">' +
+        '<svg class="chev" width="11" height="11" viewBox="0 0 24 24" aria-hidden="true">' +
+        '<path d="M7 3.5 L18.5 12 L7 20.5" fill="none" stroke="currentColor" stroke-width="4.2"' +
+        ' stroke-linecap="square" stroke-linejoin="miter"/></svg></button>' +
+    '</div>' +
+    '<div class="due-grid">' + grid + '</div>' +
+    '<p class="hint" style="margin-top:var(--sp-3);">' +
+      (line.due ? '정한 날을 다시 누르면 지웁니다.' : '마감날을 고르세요.') + '</p>';
+}
+
+async function setDue(code){
+  if(!dueTarget) return;
+  const note = notesOf(viewMonth).find(n => n.id === dueTarget.noteId);
+  const line = note && note.lines[dueTarget.idx];
+  if(!line) return;
+  line.due = (line.due === code) ? '' : code;      // the same day again clears it
+  hideDue();
+  hwEditKey = null;
+  renderAll();                                     // the calendar shows D-day too
+  saveBoard().catch(() => {});
+}
+
+/* =========================================================================
+   Editing
+
+   A note is written on where it stands. Only the month as a whole still
+   opens a box, because the names have to be in the text for it to say which
+   lines belong to which note.
+   ========================================================================= */
+/* ---- writing on a note, where it stands -------------------------------
+   A note used to open a box over the board to be written in. It is written on
+   in place now: pressing it turns the paper into the text it holds, with its
+   colour beside it, and pressing ✓ or anything else puts it back.
+   ----------------------------------------------------------------------- */
+let noteEditId = null;
+
+function openNote(id){
+  const note = notesOf(viewMonth).find(n => n.id === id);
+  if(!note || isHomework(note.name)) return;
+  noteEditId = id;
+  renderBoard();
+  const box = document.querySelector('#boardStack .pi-edit');
+  if(box){ box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
+}
+
+/* A new note appears straight away, already open to be written on. Left
+   empty, it is taken away again when it closes. */
+async function addNote(base){
+  const mm = viewMonth;
+  if(!Array.isArray(board[mm])) board[mm] = [];
+  const note = {id: uid(), name: nextName(mm, base), color: '', lines: []};
+  board[mm].push(note);
+  openNote(note.id);
+  saveBoard().catch(() => {});
+}
+
+/* Typed into, the note is kept as it is typed — but the board is NOT redrawn,
+   or the caret would jump back to the start on every letter. */
+async function noteTyping(el, id){
+  const note = notesOf(viewMonth).find(n => n.id === id);
+  if(!note) return;
+  note.lines = parseLines(el.value);
+  saveBoard().catch(() => {});
+}
+
+async function noteColorPick(el, id){
+  const note = notesOf(viewMonth).find(n => n.id === id);
+  if(!note) return;
+  note.color = el.value.replace('#', '');
+  const paper = el.closest('.pi');
+  if(paper) paper.style.background = el.value;      // no redraw: the box is open
+  saveBoard().catch(() => {});
+}
+
+/* Closing. A note with nothing written on it is taken away rather than left
+   as a blank square nobody meant to make. */
+async function closeNote(){
+  const id = noteEditId;
+  noteEditId = null;
+  if(id){
+    const mm = viewMonth;
+    const at = (board[mm] || []).findIndex(n => n.id === id);
+    if(at !== -1 && !board[mm][at].lines.length){
+      board[mm].splice(at, 1);
+      saveBoard().catch(() => {});
+    }
+  }
+  renderBoard();
+}
+
+function noteEditKey(ev){
+  if(ev.key === 'Escape'){ ev.preventDefault(); closeNote(); }
+}
+
+async function deleteNoteNow(el, id){
+  if(!armed(el, '한 번 더 누르면 지웁니다')) return;
+  const mm = viewMonth;
+  const at = (board[mm] || []).findIndex(n => n.id === id);
+  if(at === -1) return;
+  board[mm].splice(at, 1);
+  noteEditId = null;
+  renderBoard();
+  saveBoard().catch(() => {});
+}
+
+/* The month as a whole, as text — the one thing still written in a box,
+   because without the [names] there is no saying which lines belong where. */
+function openBoardText(){
+  noteEditId = null;
+  document.getElementById('noteBox').innerHTML =
+    '<button class="modal-close" onclick="hideNote()" aria-label="Close">✕</button>' +
+    '<p class="modal-title">' + escapeHtml(monthTitle()) + '</p>' +
+    '<textarea id="noteText" rows="14" spellcheck="false"' +
+      ' style="font-size:var(--fs-label);">' +
+      escapeHtml(boardToEditText(viewMonth)) + '</textarea>' +
+    '<p class="hint" style="margin-top:var(--sp-2);">' +
+      '<code>-</code>로 시작하면 작은 줄. 포스트잇 색은 포스트잇을 눌러서 고칩니다.</p>' +
+    '<div class="actions" style="margin-top:var(--sp-3);">' +
+      '<button class="btn btn-primary" onclick="saveNoteText(this)">저장</button>' +
+    '</div>';
+  document.getElementById('noteOverlay').classList.add('show');
+}
+
+function monthTitle(){
+  return (2000 + parseInt(viewMonth.slice(0,2), 10)) + '. ' + parseInt(viewMonth.slice(2,4), 10);
+}
+
+function hideNote(){ document.getElementById('noteOverlay').classList.remove('show'); }
+
+/* Replacing a whole month asks twice. */
+async function saveNoteText(el){
+  const text = document.getElementById('noteText').value;
+  const mm = viewMonth;
+  if(!Array.isArray(board[mm])) board[mm] = [];
+  if(board[mm].length && !armed(el, '한 번 더 누르면 이 달을 덮어씁니다')) return;
+  // A month rewritten as text keeps the colours its notes already had.
+  const old = {};
+  board[mm].forEach(n => { old[n.name] = n.color; });
+  const parsed = parseBoardText(text);
+  parsed.forEach(n => { if(old[n.name]) n.color = old[n.name]; });
+  board[mm] = parsed;
+  hideNote(); renderBoard();
+  saveBoard().catch(() => {});
+}
+
+/* The armed state: the first press underlines the text in red, the second
+   acts. Never a dialog, and the wording is restored if nothing follows. */
+const ARMED = new Map();
+function armed(el, label){
+  const now = Date.now();
+  const prev = ARMED.get(el);
+  if(prev && now - prev.at < 4000){
+    clearTimeout(prev.timer);
+    ARMED.delete(el);
+    el.textContent = prev.original;
+    el.classList.remove('is-armed');
+    return true;
+  }
+  const original = prev ? prev.original : el.textContent;
+  el.textContent = label;
+  el.classList.add('is-armed');
+  const timer = setTimeout(() => {
+    el.textContent = original;
+    el.classList.remove('is-armed');
+    ARMED.delete(el);
+  }, 4000);
+  ARMED.set(el, {at: now, original: original, timer: timer});
+  return false;
+}
+
+/* =========================================================================
+   PANE 2 — the month
+
+   The day is ticked in two places: the box at the top, which is today and is
+   meant to be one tap, and the day editor, which is any day and is meant to be
+   complete. Both write the same two keys.
+   ========================================================================= */
+
+/* The week a day belongs to, Monday first — this is what the two-a-week limit
+   on eating out is counted against. */
+/* ---- today, under the calendar, written straight into ------------------
+   Not a summary of today with an editor behind it: this IS the editor. The
+   same three lists the day popup draws, so today — the day actually being
+   written — needs no popup at all. The popup stays for every other day.
+   ----------------------------------------------------------------------- */
+/* Which day the part above the calendar is showing. Today until a date is
+   pressed; pressing today's date, or the heading, comes back. */
+let pickedDay = null;
+const shownDay = () => pickedDay || todayCode();
+
+function renderToday(){
+  const code = shownDay();
+  const d = dateFromCode(code);
+  const weekend = dowIndex(d) >= 5;
+  const isToday = (code === todayCode());
+
+  /* The tasks falling due today are not written into the day — they are
+     worked out from the board, so moving a deadline moves them with it. */
+  /* Through the same marks everything else here goes through: the wording
+     shows, the link is a link, and no punctuation is left on screen. This
+     line was being escaped raw, so a task written with a link read out its
+     whole address. */
+  const dues = duesOn(code).map(t =>
+    '<div class="due-sched">' + mdToHtml(t) + '</div>').join('');
+
+  document.getElementById('todayBox').innerHTML =
+    '<button class="today-date" onclick="pickDay(null)">' +
+      (isToday ? '오늘 &middot; ' : '') + (d.getMonth()+1) + '. ' + d.getDate() +
+      ' (' + DOW[dowIndex(d)] + ')' +
+      (isToday ? '' : '<span class="back-today">오늘로</span>') +
+    '</button>' +
+    /* The day's own errands first and the deadlines under them: what was
+       written for today outranks what merely falls due on it. Both inside the
+       one group, so the + closes the pair rather than splitting it. */
+    dayListHtml(code, 'sched', dues) +
+    (weekend ? '' : checksHtml(code)) +
+    dayListHtml(code, 'chal') +
+    dayListHtml(code, 'diary');
+}
+
+/* Pressing a date moves the part above the calendar onto it; there is no
+   popup any more, so the day is written in the one place. */
+function pickDay(code){
+  pickedDay = (code && code !== todayCode()) ? code : null;
+  dayEditKey = null;
+  renderCalPane();
+}
+
+/* ---- the month grid --------------------------------------------------- */
+function renderCalendar(){
+  const mm = viewMonth;
+  const y = 2000 + parseInt(mm.slice(0,2), 10);
+  const m = parseInt(mm.slice(2,4), 10) - 1;
+  const first = new Date(y, m, 1);
+  const lead = dowIndex(first);
+  const days = new Date(y, m + 1, 0).getDate();
+  const today = todayCode();
+
+  let html = DOW.map(d => '<div class="cal-dow">' + d + '</div>').join('') +
+    '<div class="cal-dow"></div>';
+  for(let i = 0; i < lead; i++) html += '<div class="cal-cell empty"></div>';
+
+  /* The eighth column belongs to the week, not to a day, so it is written
+     whenever the row is full — and once more at the end for a month that
+     stops partway through a week. */
+  let col = lead;
+  const weekCell = code => {
+    const k = weekKey(code);
+    const t = talkOf(k);
+    return '<button class="cal-week" onclick="openTalk(\'' + k + '\')"' +
+      ' aria-label="쀼톡">' +
+      (talkEmpty(t) ? PLUS_SVG : '<span class="mark">REVIEW</span>') +
+      '</button>';
+  };
+
+  for(let day = 1; day <= days; day++){
+    const code = mm + pad2(day);
+    const d = new Date(y, m, day);
+    const weekend = dowIndex(d) >= 5;
+    const s = sharedOf(code);
+
+    /* No ticks on a weekend: there is nothing to record, so nothing is drawn
+       rather than two empty boxes that can never be filled. */
+    let marks = '';
+    if(!weekend){
+      marks = '<div class="cal-marks">' +
+        DAY_MARKS.map(m =>
+          '<span class="cal-sq"' +
+            (markDone(s, m.key)
+              ? ' style="background:#' + escapeAttr(markColor(m.key)) +
+                ';border-color:#' + escapeAttr(markColor(m.key)) + ';"'
+              : '') + '></span>').join('') +
+        '</div>';
+    }
+
+
+
+    /* The errands are written out; the diary is not — it is a paragraph, and
+       a cell this narrow would show four characters of it. So the diary keeps
+       the dot that says there is some, and the day opens to show it.
+
+       Two lines for the wording, and what was written FOR the day comes
+       first: a deadline falls on a day, an errand was put there. Both sit in
+       the one two-line box, so the deadlines take whatever room the errands
+       leave and simply do not appear when there is none. */
+    const join = arr => escapeHtml(arr.map(stripMd).join(' / '));
+    const dues = duesOn(code);
+    let sched = '';
+    if(s.sched.length || dues.length){
+      sched = '<span class="cal-sched">' +
+        (s.sched.length ? '<span>' + join(s.sched) + '</span>' : '') +
+        (dues.length ? '<span class="due">' +
+          (s.sched.length ? ' / ' : '') + join(dues) + '</span>' : '') +
+      '</span>';
+    }
+    if(s.chal.length) sched += '<span class="cal-sched chal">' + join(s.chal) + '</span>';
+    const written = s.diary.length ? '<span class="cal-dot"></span>' : '';
+
+    html += '<button class="cal-cell' + (weekend ? ' weekend' : '') +
+              (code === today ? ' today' : '') +
+              (code === shownDay() && code !== today ? ' picked' : '') + '"' +
+              ' onclick="pickDay(\'' + code + '\')">' +
+              '<span class="cal-daynum">' + day + '</span>' +
+              sched + marks + written +
+            '</button>';
+
+    col++;
+    if(col === 7){ html += weekCell(code); col = 0; }
+  }
+  /* A month that ends mid-week still has that week, and it still gets its
+     column: the blanks go first so the mark stays in the last place. */
+  if(col > 0){
+    for(let i = col; i < 7; i++) html += '<div class="cal-cell empty"></div>';
+    html += weekCell(mm + pad2(days));
+  }
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+function renderCalPane(){ renderToday(); renderCalendar(); }
+
+/* ---- the day ----------------------------------------------------------
+   Three lists and two ticks. Each list is added to by a +, and each line is
+   reworded by pressing it, which is how the homework on the board and the
+   to-do list in Time both behave. An emptied line is a deleted line.
+   ----------------------------------------------------------------------- */
+let dayCode = null;
+/* Which line is open for rewording, named by its DAY as well as its list and
+   its place in it. Today's list and the popup can both be on screen, and a
+   key that said only 'sched|2' would open the same line in both. */
+let dayEditKey = null;
+
+const DAY_LISTS = {
+  sched: {label: '스케줄', add: '새 일정'},
+  chal:  {label: '도전',   add: '새 도전'},
+  diary: {label: '일기',   add: '오늘 한 줄'}
+};
+
+/* Output, then input or exercise. Drawn the same under the calendar and in
+   the popup, and never on a weekend — those days are off by agreement, so
+   there is nothing to tick and nothing is drawn. */
+/* Three lines, each a name and a blank. Nothing is ticked: what is written
+   in the blank is the record — "수영" one day and "조깅" the next — and a
+   blank left empty is a day it did not happen. */
+function checksHtml(code){
+  const s = sharedOf(code);
+  return '<div class="hw-group mark-group">' +
+    DAY_MARKS.map(m =>
+      '<div class="mark-row">' +
+        '<span class="mark-label">' + m.label + '</span>' +
+        '<span class="mark-colon">:</span>' +
+        '<input type="text" class="mark-input" value="' + escapeAttr(s[m.key]) + '"' +
+          ' onchange="setMark(\'' + code + '\',\'' + m.key + '\',this.value)"' +
+          ' aria-label="' + m.label + '">' +
+      '</div>').join('') +
+  '</div>';
+}
+
+async function setMark(code, key, value){
+  const s = sharedOf(code);
+  s[key] = String(value || '').trim();
+  shared[code] = s;
+  renderCalendar();            // the grid's marks follow, the box is untouched
+  saveShared().catch(() => {});
+}
+
+/* One list of a day: its lines, each reworded by pressing it and deleted by
+   emptying it, and a + at the right that adds one more. The same markup is
+   used under the calendar and inside the popup. */
+/* One list of the day. Nothing names them: they are told apart by where they
+   stand and by the one that is red. The label is kept for the + button's
+   spoken name.
+
+   The diary is the odd one: it is not a list of things but a few lines of
+   writing, so it holds one entry and the + goes away once it has it. */
+function dayListHtml(code, field, tail){
+  const s = sharedOf(code);
+  const meta = DAY_LISTS[field];
+  const red = (field === 'chal');
+  const prose = (field === 'diary');
+  const rows = prose ? (s.diary.length ? [s.diary.join('\n')] : []) : s[field];
+
+  return '<div class="hw-group' + (prose ? ' diary-group' : '') + '">' +
+    rows.map((t, i) => {
+      const key = code + '|' + field + '|' + i;
+      const args = '\'' + code + '\',\'' + field + '\',' + i;
+      if(dayEditKey === key){
+        return '<div class="todo-row">' + (prose
+          ? '<textarea class="todo-edit-input prose" rows="3"' +
+              ' onkeydown="dayLineKey(event,' + args + ')"' +
+              ' onblur="dayLineCommit(this,' + args + ')"' +
+              ' aria-label="고쳐 쓰기">' + escapeHtml(t) + '</textarea>'
+          : '<input type="text" class="todo-edit-input" value="' + escapeAttr(t) + '"' +
+              ' onkeydown="dayLineKey(event,' + args + ')"' +
+              ' onblur="dayLineCommit(this,' + args + ')"' +
+              ' aria-label="고쳐 쓰기">') + '</div>';
+      }
+      return '<div class="todo-row">' +
+        '<button class="todo-text"' + (red ? ' style="color:var(--rust);"' : '') +
+          ' onclick="dayStartEdit(' + args + ')">' + mdToHtml(t) + '</button>' +
+      '</div>';
+    }).join('') +
+    /* Anything that belongs to this list without being one of its lines —
+       the deadlines under the errands — stands here, inside the group and
+       above its +, or the + reads as belonging to whatever comes next. */
+    (tail || '') +
+    /* Prose gets one + and then none: there is one piece of writing a day,
+       not a list of them. */
+    (prose && rows.length ? '' :
+      '<div class="hw-row"><button class="hw-add" aria-label="' + meta.label + ' 추가"' +
+        (red ? ' style="color:var(--rust);"' : '') +
+        ' onclick="addDayLine(\'' + code + '\',\'' + field + '\')">' + PLUS_SVG + '</button></div>') +
+  '</div>';
+}
+
+/* Today may be on screen while another day is being written, so both the
+   part above the calendar and the grid are redrawn together. */
+function redrawDay(code){ renderCalPane(); }
+
+function focusDayEdit(){
+  const box = document.querySelector('#todayBox .todo-edit-input');
+  if(box){ box.focus(); box.select(); }
+}
+
+async function addDayLine(code, field){
+  const s = sharedOf(code);
+  s[field].push(DAY_LISTS[field].add);
+  shared[code] = s;
+  /* Opened for rewording straight away: a line that reads "새 일정" is a
+     placeholder, and asking for a second tap to replace it would be a step
+     with nothing in it. */
+  dayEditKey = code + '|' + field + '|' + (s[field].length - 1);
+  redrawDay(code);
+  focusDayEdit();
+  saveShared().catch(() => {});
+}
+
+function dayStartEdit(code, field, idx){
+  const key = code + '|' + field + '|' + idx;
+  dayEditKey = (dayEditKey === key) ? null : key;
+  redrawDay(code);
+  focusDayEdit();
+}
+
+/* Enter keeps it, Escape drops it, and tapping elsewhere keeps it too — on a
+   phone that is how a box is left, and losing the wording there would be a
+   nasty surprise. */
+function dayLineKey(ev, code, field, idx){
+  /* In prose, Enter is a new line; it is only "done" in a one-line field. */
+  if(ev.key === 'Enter' && field !== 'diary'){
+    ev.preventDefault(); dayLineCommit(ev.target, code, field, idx); return;
+  }
+  if(ev.key === 'Escape'){ ev.preventDefault(); dayEditKey = null; redrawDay(code); }
+}
+
+async function dayLineCommit(el, code, field, idx){
+  const s = sharedOf(code);
+  if(!s[field].length) return;
+  const t = String(el.value || '').trim();
+  if(field === 'diary'){
+    /* Prose: the whole of it is one entry, kept as the lines it was written
+       in so the text form stays line by line. */
+    s.diary = t ? t.split('\n').map(x => x.trim()).filter(Boolean) : [];
+  } else if(t) s[field][idx] = t;
+  else s[field].splice(idx, 1);     // emptied out, the line goes with it
+  shared[code] = s;
+  dayEditKey = null;
+  redrawDay(code);
+  saveShared().catch(() => {});
+}
+
+/* ---- 쀼톡, one per week ------------------------------------------------
+   Written as text, in the same three headings every week, so a blank one is
+   the headings with nothing under them.
+   ----------------------------------------------------------------------- */
+const TALK_SECTIONS = [
+  {key: 'good',   head: '좋았던 점'},
+  {key: 'better', head: '나아지면 좋은점'},
+  {key: 'etc',    head: '기타'}
+];
+const TALK_BLANK = TALK_SECTIONS.map(s => '[' + s.head + ']\n').join('\n');
+
+function talkToText(t){
+  return TALK_SECTIONS.map(s =>
+    '[' + s.head + ']\n' + t[s.key].join('\n')).join('\n\n');
+}
+
+function parseTalkText(text){
+  const out = {good: [], better: [], etc: []};
+  let cur = null;
+  String(text).split('\n').forEach(raw => {
+    const line = raw.trim();
+    if(!line) return;
+    const m = line.match(/^\[(.+)\]$/);
+    if(m){
+      const hit = TALK_SECTIONS.find(s => s.head === m[1].trim());
+      cur = hit ? hit.key : null;
+      return;
+    }
+    if(cur) out[cur].push(line);
+  });
+  return out;
+}
+
+/* The week it covers, said as the two dates it runs between. */
+function talkTitle(key){
+  const a = dateFromCode(key);
+  const b = new Date(a.getFullYear(), a.getMonth(), a.getDate() + 6);
+  return (a.getMonth()+1) + '. ' + a.getDate() + ' – ' + (b.getMonth()+1) + '. ' + b.getDate();
+}
+
+let talkKey = null;
+
+/* Read first, written second. A week already written is there to be read,
+   and opening onto an editing box made the headings and the marks the first
+   thing seen instead of what the two of them actually said. Pressing it opens
+   the full text, headings and all. A week with nothing in it has nothing to
+   read, so it opens ready to write. */
+let talkEditing = false;
+
+function openTalk(key){
+  talkKey = key;
+  talkEditing = talkEmpty(talkOf(key));
+  renderTalk();
+  document.getElementById('talkOverlay').classList.add('show');
+}
+
+function renderTalk(){
+  const t = talkOf(talkKey);
+  const empty = talkEmpty(t);
+  document.getElementById('talkBox').innerHTML =
+    '<button class="modal-close" onclick="hideTalk()" aria-label="Close">✕</button>' +
+    '<p class="modal-title">쀼톡 &middot; ' + talkTitle(talkKey) + '</p>' +
+    (talkEditing
+      ? '<textarea id="talkText" rows="14" spellcheck="false"' +
+          ' style="font-size:var(--fs-label);">' +
+          escapeHtml(empty ? TALK_BLANK : talkToText(t)) + '</textarea>' +
+        '<div class="actions" style="margin-top:var(--sp-3);">' +
+          '<button class="btn btn-primary" onclick="saveTalk()">저장</button>' +
+          (empty ? '' : '<button class="btn btn-danger" onclick="deleteTalk(this)">삭제</button>') +
+        '</div>'
+      : '<button class="talk-read" onclick="editTalk()">' +
+          TALK_SECTIONS.filter(s => t[s.key].length).map(s =>
+            '<span class="talk-part">' +
+              t[s.key].map(x => '<span>' + mdToHtml(x) + '</span>').join('<br>') +
+            '</span>').join('') +
+        '</button>');
+  if(talkEditing){
+    const box = document.getElementById('talkText');
+    if(box){ box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
+  }
+}
+
+function editTalk(){ talkEditing = true; renderTalk(); }
+
+function hideTalk(){
+  document.getElementById('talkOverlay').classList.remove('show');
+  talkEditing = false;
+}
+
+async function saveTalk(){
+  if(!talkKey) return;
+  const t = parseTalkText(document.getElementById('talkText').value);
+  /* Nothing under any heading is nothing at all: the week goes back to a +
+     rather than being kept as an empty record. */
+  if(talkEmpty(t)) delete talks[talkKey];
+  else talks[talkKey] = t;
+  hideTalk();
+  renderCalPane();
+  saveTalks().catch(() => {});
+}
+
+async function deleteTalk(el){
+  if(!talkKey) return;
+  if(!armed(el, '한 번 더 누르면 지웁니다')) return;
+  delete talks[talkKey];
+  hideTalk();
+  renderCalPane();
+  saveTalks().catch(() => {});
+}
+
+/* =========================================================================
+   Options
+   ========================================================================= */
+/* ---- the data editor -------------------------------------------------
+   The same text the backup holds, narrowed by kind and by date, and written
+   back the same way: whatever the text names is replaced, whatever it leaves
+   out is left alone.
+   ----------------------------------------------------------------------- */
+let dataKinds = {review: true, talk: true, day: true};
+
+function toggleKind(el, key){
+  dataKinds[key] = !dataKinds[key];
+  el.classList.toggle('on', dataKinds[key]);
+  renderDataText();
+}
+
+/* The date boxes speak 2026-10-26; the data is keyed 261026. */
+const fromISO = v => /^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v.slice(2).replace(/-/g, '') : '';
+
+function dataRange(){
+  return {
+    from: fromISO(document.getElementById('dataFrom').value),
+    to:   fromISO(document.getElementById('dataTo').value)
+  };
+}
+
+function clearDataRange(){
+  document.getElementById('dataFrom').value = '';
+  document.getElementById('dataTo').value = '';
+  renderDataText();
+}
+
+function renderDataText(){
+  const r = dataRange();
+  const text = allToFullText(dataKinds, r.from, r.to);
+  document.getElementById('dataText').value = text;
+  document.getElementById('dataMsg').textContent =
+    text ? '' : '고른 조건에 해당하는 내용이 없습니다.';
+}
+
+function copyDataText(){
+  const el = document.getElementById('dataText');
+  el.select();
+  try{ navigator.clipboard.writeText(el.value); }catch(e){ document.execCommand('copy'); }
+  document.getElementById('dataMsg').textContent = '복사했습니다.';
+}
+
+async function applyDataText(el){
+  const p = parseAllText(document.getElementById('dataText').value);
+  const c = restoreCounts(p);
+  if(!restoreHasAny(p)){
+    document.getElementById('dataMsg').textContent = '되돌릴 내용이 없습니다.';
+    return;
+  }
+  if(!armed(el, '한 번 더 누르면 덮어씁니다')) return;
+  const jobs = applyParsed(p);
+  renderAll();
+  /* After the redraw, not before: renderDataText clears this line. */
+  renderDataText();
+  document.getElementById('dataMsg').textContent =
+    Object.keys(c).map(k => k + ' ' + c[k]).join(' · ') + ' 되돌렸습니다.';
+  Promise.all(jobs).catch(() => {});
+}
+
+function renderOptions(){
+  document.getElementById('nameA').value = people.a || '';
+  document.getElementById('nameB').value = people.b || '';
+  document.getElementById('meRow').innerHTML = WHO.map(who =>
+    '<button class="opt-btn' + (me === who ? ' selected' : '') + '"' +
+    ' onclick="setMe(\'' + who + '\')">' + escapeHtml(people[who]) + '</button>').join('');
+  document.getElementById('syncIdInput').value = getSyncId();
+  renderColorRows();
+  renderDataText();
+}
+
+/* Changing one is instant — there is nothing to confirm about a colour, and
+   seeing it is the only way to judge it. */
+function renderColorRows(){
+  document.getElementById('colorRows').innerHTML = COLOR_SLOTS.map(s =>
+    '<div class="color-line">' +
+      '<input type="color" value="#' + escapeAttr(colorSlot(s.key)) + '"' +
+        ' aria-label="' + escapeAttr(s.label) + '"' +
+        ' oninput="setColorSlot(' + JSON.stringify(s.key).replace(/"/g, '&quot;') +
+        ', this.value)">' +
+      '<span>' + escapeHtml(s.label) + '</span>' +
+    '</div>').join('');
+}
+
+async function setColorSlot(key, value){
+  colors[key] = String(value || '').replace('#', '').toUpperCase();
+  renderAll();
+  renderDataText();
+  saveColors().catch(() => {});
+}
+
+async function resetColors(el){
+  if(!armed(el, '한 번 더 누르면 되돌립니다')) return;
+  colors = Object.assign({}, DEFAULT_COLORS);
+  renderColorRows();
+  renderAll();
+  renderDataText();
+  saveColors().catch(() => {});
+}
+
+async function saveNames(){
+  people = {a: document.getElementById('nameA').value.trim() || '령',
+            b: document.getElementById('nameB').value.trim() || '동'};
+  renderOptions(); renderAll();
+  savePeople().catch(() => {});
+}
+
+function setMe(who){
+  me = who;
+  try{ localStorage.setItem(ME_KEY, who); }catch(e){}
+  renderOptions();
+}
+
+function copySyncId(){
+  const el = document.getElementById('syncIdInput');
+  el.select();
+  try{ navigator.clipboard.writeText(el.value); }catch(e){ document.execCommand('copy'); }
+  document.getElementById('syncMsg').textContent = '복사했습니다.';
+}
+
+/* Changing the code points this device at someone else's data, so it asks
+   twice and then reloads rather than trying to reconcile what is in memory. */
+async function applySyncId(el){
+  const v = document.getElementById('syncIdInput').value.trim();
+  if(!v) return;
+  if(v === getSyncId()){ document.getElementById('syncMsg').textContent = '이미 이 코드입니다.'; return; }
+  if(!armed(el, '한 번 더 누르면 바뀝니다')) return;
+  setSyncId(v);
+  document.getElementById('syncMsg').textContent = '코드를 바꿨습니다. 다시 불러옵니다…';
+  setTimeout(() => location.reload(), 400);
+}
+
+/* =========================================================================
+   Backup — every key this app owns, in one text file. A new field goes in
+   here in the same change that creates it; that rule is why nothing has been
+   lost across the other two apps.
+   ========================================================================= */
+function buildBackupText(){
+  return '===== BBYU ' + todayCode() + ' =====\n\n' +
+    colorsToFullText() + '\n\n\n' +
+    peopleToFullText() + '\n\n\n' + allToFullText();
+}
+
+function downloadText(name, text){
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+}
+
+function backupAll(){
+  downloadText('BBYU_' + todayCode() + '.txt', buildBackupText());
+  document.getElementById('backupMsg').textContent = '백업을 받았습니다.';
+}
+
+let pendingRestore = null;
+
+function openRestorePicker(){ document.getElementById('restoreFile').click(); }
+
+function handleRestoreFile(input){
+  const file = input.files && input.files[0];
+  input.value = '';                     // so the same file can be picked again
+  if(!file) return;
+  const r = new FileReader();
+  r.onload = () => { pendingRestore = readBackupText(String(r.result || '')); showRestore(file.name); };
+  r.onerror = () => { pendingRestore = null; showRestore(file.name, '읽을 수 없는 파일입니다.'); };
+  r.readAsText(file);
+}
+
+/* A kind the file does not mention comes back empty, and empty is what stops
+   that part being touched: half a file must not be able to wipe what it does
+   not mention. The file's own date line decides which year a month written as
+   "10월" belongs to. */
+function readBackupText(text){
+  const s = String(text || '');
+  const stamp = /=====\s*BBYU\s*(\d{6})/.exec(s);
+  const out = parseAllText(s, stamp ? stamp[1].slice(0,2) : null);
+  return restoreHasAny(out) ? out : readLegacyBackup(s);
+}
+
+/* Files taken before the backup became readable text: one `key<TAB>{json}`
+   line per store. They are still restorable — a backup that stops working
+   because the format moved on is not a backup. */
+function readLegacyBackup(text){
+  const raw = {};
+  String(text).split('\n').forEach(line => {
+    const i = line.indexOf('\t');
+    if(i === -1) return;
+    try{ raw[line.slice(0, i).trim()] = JSON.parse(line.slice(i + 1)); }catch(e){}
+  });
+  const out = {colors: raw['colors'] || null, people: raw['people'] || null,
+               board: raw['board'] || {}, talks: raw['talks'] || {},
+               shared: raw['shared'] || {}};
+  /* Older still: the day was two records, one per person. */
+  if(raw['daily-a'] || raw['daily-b']){
+    const keep = shared;
+    shared = Object.assign({}, out.shared);
+    migrateDays(raw['daily-a'] || {}, raw['daily-b'] || {});
+    out.shared = shared;
+    shared = keep;
+  }
+  return out;
+}
+
+function restoreCounts(p){
+  if(!p) return null;
+  return {
+    '쀼리뷰': Object.keys(p.board || {}).length,
+    '쀼톡':   Object.keys(p.talks || {}).length,
+    '쀼일':   Object.keys(p.shared || {}).length
+  };
+}
+function restoreHasAny(p){
+  const c = restoreCounts(p);
+  return !!(p && (p.colors || p.people || (c['쀼리뷰'] + c['쀼톡'] + c['쀼일']) > 0));
+}
+
+function showRestore(name, err){
+  const wrap = document.getElementById('restoreWrap');
+  const msg = document.getElementById('restoreMsg');
+  const go = document.getElementById('restoreGoBtn');
+  wrap.style.display = 'block';
+  if(err || !restoreHasAny(pendingRestore)){
+    pendingRestore = null;
+    msg.textContent = name + ' — ' + (err || '읽을 내용이 없습니다.');
+    go.style.display = 'none';
+    return;
+  }
+  const c = restoreCounts(pendingRestore);
+  msg.textContent = name + ' — ' +
+    Object.keys(c).map(k => k + ' ' + (c[k] || '그대로')).join(' · ');
+  go.style.display = '';
+}
+
+/* Each month, week and day the text names replaces the one stored under that
+   name; everything it does not name is left alone. */
+function applyParsed(p){
+  const jobs = [];
+  if(p.colors){ colors = Object.assign({}, colors, p.colors); jobs.push(saveColors()); }
+  if(p.people){ people = Object.assign({}, people, p.people); jobs.push(savePeople()); }
+  if(Object.keys(p.board).length){
+    Object.keys(p.board).forEach(mm => {
+      /* A month written back keeps the colours its notes already had, the way
+         the month editor does. */
+      const old = {};
+      notesOf(mm).forEach(n => { old[n.name] = n.color; });
+      p.board[mm].forEach(n => { if(!n.color && old[n.name]) n.color = old[n.name]; });
+      board[mm] = p.board[mm];
+    });
+    jobs.push(saveBoard());
+  }
+  if(Object.keys(p.talks).length){
+    Object.keys(p.talks).forEach(k => {
+      if(talkEmpty(talkOf(k)) && talkEmpty(p.talks[k])) delete talks[k];
+      else talks[k] = p.talks[k];
+    });
+    jobs.push(saveTalks());
+  }
+  if(Object.keys(p.shared).length){
+    Object.keys(p.shared).forEach(c => { shared[c] = normDay(p.shared[c]); });
+    jobs.push(saveShared());
+  }
+  return jobs;
+}
+
+function cancelRestore(){
+  pendingRestore = null;
+  document.getElementById('restoreWrap').style.display = 'none';
+}
+
+async function restoreFromFile(el){
+  if(!pendingRestore) return;
+  if(!armed(el, '한 번 더 누르면 덮어씁니다')) return;
+  const jobs = applyParsed(pendingRestore);
+  pendingRestore = null;
+  document.getElementById('restoreWrap').style.display = 'none';
+  document.getElementById('backupMsg').textContent = '복원했습니다.';
+  renderAll(); renderOptions();
+  Promise.all(jobs).catch(() => {});
+}
+
+/* =========================================================================
+   Start
+   ========================================================================= */
+function renderAll(){
+  renderMonthLabel();
+  renderBoard();
+  renderCalPane();
+}
+
+/* The date turning over while the app is open moves "today". */
+let lastSeen = todayCode();
+setInterval(() => {
+  const now = todayCode();
+  if(now === lastSeen) return;
+  lastSeen = now;
+  renderCalPane();
+}, 30000);
+
+document.querySelectorAll('.modal-overlay').forEach(ov => {
+  ov.addEventListener('click', e => { if(e.target === ov) ov.classList.remove('show'); });
+});
+
+viewMonth = thisMonth();
+/* Which screen this is, said once at the start, so the dot for it is lit
+   before anything has been pressed. */
+setPane(pane);
+/* Drawn at once, before anything is fetched. The month, the empty board and
+   today's row are all it can show yet, but the screen is never blank while a
+   request is in flight — which is what it was doing: `renderAll` sat inside
+   the load's `.then()`, so a slow or stalled read left nothing on screen until
+   something else happened to redraw. Pressing a month arrow was that something
+   else, which is why the board appeared the moment one was pressed. */
+renderAll();
+loadAll()
+  .catch(e => { console.warn('Load failed, showing what is on this device', e); })
+  .then(() => {
+    renderAll();
+    reportSyncTrouble();
+    retryUnsent();
+  });
+</script>
+</body>
+</html>
