@@ -437,9 +437,13 @@
   /* A mark that has been written in stands as wording, centred like the
      rest, with the box it was typed into gone. */
 
-  /* The errands are set a step up wherever they appear — written out, and in
-     the blank they are written into. */
-  .tb-plan .hw-group:first-of-type .todo-edit-input{
+  /* Everything on the planning sheet is set a step up from the rest of the
+     day — written out, in the blank it is written into, and in the box an
+     empty list offers. The errands had it and the challenges did not, which
+     made a challenge read as a footnote to the errands rather than the other
+     half of the same sheet. Three names deep, so it still out-ranks the
+     label size the box above sets on every blank in it. */
+  .today-list .tb-plan .todo-edit-input{
     font-size:var(--fs-body); line-height:1.35;
   }
   /* Sized to the line it stands in, or the row would jump as it opens. */
@@ -559,9 +563,9 @@
   /* Prose needs the width of the paper, not the width of its own wording. */
   .today-list .diary-group .todo-row{width:100%;}
   .today-list .todo-edit-input.prose{flex:1 1 auto;}
-  /* The errands are what the day is read for, so they are set a step up from
-     everything else in the box. The diary and the deadlines stay small. */
-  .tb-plan .hw-group:first-of-type .todo-text{
+  /* What is planned is what the day is read for, so it is set a step up from
+     everything else. The diary and the deadlines stay small. */
+  .today-list .tb-plan .todo-text{
     font-size:var(--fs-body); line-height:1.35;
   }
   /* The day being written: the figure, and the weekday under it. A button,
@@ -674,6 +678,11 @@
     white-space:pre-wrap; line-height:1.5;
   }
   .diary-group .todo-edit-input.prose{line-height:1.5; text-align:left;}
+  /* The word standing in the empty box is a label, like the two above it on
+     the other sheet, so it sits up the middle. What gets typed over it is
+     prose and stays at the left, which is why this is set on the placeholder
+     and not on the box. */
+  .tb-diary .todo-edit-input::placeholder{text-align:center;}
   /* Nothing names the three lists any more, so the space between them is
      what parts them — it has to be plainly bigger than the space between two
      lines of the same list, or they read as one. */
@@ -1091,7 +1100,7 @@ if('serviceWorker' in navigator){
     </div>
   </div></div>
 
-  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-26ac</p>
+  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-26ad</p>
 </div></div>
 <script>
 /* =========================================================================
