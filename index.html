@@ -506,6 +506,11 @@
     display:grid; grid-template-columns:minmax(0, 42fr) minmax(0, 58fr);
     gap:var(--sp-2); align-items:start;
   }
+  /* Laid out as two columns rather than as four cells of one grid: in a grid
+     the second row cannot start until the first row's tallest sheet has
+     finished, which left the money stranded far below the day it belongs to
+     whenever the errands on the right ran long. */
+  .tcol{display:flex; flex-direction:column; gap:var(--sp-2); min-width:0;}
   /* A row's two sheets are NOT tied to each other: each grows on its own, so
      a long diary leaves the money sheet the height it needs rather than
      dragging it down the page with white space. What lines them up on a day
@@ -520,12 +525,11 @@
     min-height:calc(var(--fs-lead) + var(--fs-label) * 1.2 + var(--sp-4)
                     + 30px * 3 + var(--sp-2) * 2 + var(--sp-4) * 2);
   }
-  /* Left, with the month's figures in it: the day's heading and its gap, the
-     three sums and the total at line-height 1.5, the rule above the total,
-     and the padding. */
+  /* Left, with the day's figures in it: three sums and the total at
+     line-height 1.5, the rule above the total with its space either side,
+     and the sheet's own padding. */
   .tb-diary{
-    min-height:calc(var(--fs-label) * 1.3 + var(--sp-1)
-                    + var(--fs-label) * 1.5 * 4 + 5px + var(--sp-4) * 2);
+    min-height:calc(var(--fs-label) * 1.5 * 4 + 5px + var(--sp-4) * 2);
   }
   /* One sheet of the four. The four names are declared again here, the way the
      popup does it, so every rule inside simply follows: "ink" is black on this
@@ -640,11 +644,6 @@
   /* ---- 가계쀼, read out of the sheet ----
      Two readings of the same two figures: what the shown day cost, and what
      the month has cost so far. */
-  .money-sec + .money-sec{margin-top:var(--sp-4);}
-  .money-cap{
-    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:500;
-    color:var(--text-muted); margin-bottom:var(--sp-1);
-  }
   .money-line{
     display:flex; align-items:baseline; justify-content:space-between;
     gap:var(--sp-2);
@@ -1092,7 +1091,7 @@ if('serviceWorker' in navigator){
     </div>
   </div></div>
 
-  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-26ab</p>
+  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-26ac</p>
 </div></div>
 <script>
 /* =========================================================================
@@ -2938,11 +2937,10 @@ function moneyHtml(code){
     '<div class="money-line' + (cls ? ' ' + cls : '') + '">' +
       '<span>' + name + '</span><b>' + won(v) + '</b>' +
     '</div>';
-  return '<div class="money-sec">' +
-      '<div class="money-cap">' + parseInt(code.slice(4), 10) + '일</div>' +
-      CASH_FIELDS.map(f => line(f.label, c[f.key])).join('') +
-      line('합계', cashSum(c), 'sum') +
-    '</div>';
+  /* No date at the head of it. The sheet directly above carries the date in
+     figures an inch high, and this sheet is under it on the same day. */
+  return CASH_FIELDS.map(f => line(f.label, c[f.key])).join('') +
+    line('합계', cashSum(c), 'sum');
 }
 
 /* ---- the week's three sums, inside 쀼톡 -------------------------------- */
@@ -3024,13 +3022,13 @@ function renderToday(){
   const dues = duesOn(code).map(t =>
     '<div class="due-sched">' + mdToHtml(t) + '</div>').join('');
 
-  /* Four sheets in two rows. The left column is the day as a record — which
-     day it is, what was done on it, what it cost; the right column is the day
-     as writing — what is planned for it, and what was made of it. Written in
-     reading order, which is the order the grid lays them out in: the two
-     sheets of a row stand the same height, so the left one sets the floor for
-     the right and the right grows past it when there is more to say. */
+  /* Four sheets, two to a column. The left column is the day as a record —
+     which day it is, what was done on it, what it cost; the right is the day
+     as writing — what is planned for it, and what was made of it. Each column
+     stacks its own two, so the money follows the day it belongs to rather
+     than waiting for whatever the right column is doing. */
   document.getElementById('todayBox').innerHTML =
+    '<div class="tcol">' +
       '<div class="tbox tb-day">' +
         '<div class="day-head">' +
           '<button class="today-date" onclick="pickDay(null)">' +
@@ -3044,6 +3042,9 @@ function renderToday(){
            day that cannot be recorded at all. */
         checksHtml(code) +
       '</div>' +
+      '<div class="tbox tb-money">' + moneyHtml(code) + '</div>' +
+    '</div>' +
+    '<div class="tcol">' +
       /* The day's own errands first and the deadlines under them: what was
          written for today outranks what merely falls due on it. Both inside
          the one group, so the + closes the pair rather than splitting it. */
@@ -3051,8 +3052,8 @@ function renderToday(){
         dayListHtml(code, 'sched', dues) +
         dayListHtml(code, 'chal') +
       '</div>' +
-      '<div class="tbox tb-money">' + moneyHtml(code) + '</div>' +
-      '<div class="tbox tb-diary">' + dayListHtml(code, 'diary') + '</div>';
+      '<div class="tbox tb-diary">' + dayListHtml(code, 'diary') + '</div>' +
+    '</div>';
 }
 
 /* Pressing a date moves the part above the calendar onto it; there is no
