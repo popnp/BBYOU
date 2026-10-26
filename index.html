@@ -259,6 +259,8 @@
   .pi-big{font-weight:500; line-height:1.2; display:block; white-space:pre-wrap; word-break:break-word;}
   .pi-small{font-weight:300; line-height:1.3; display:block; white-space:pre-wrap; word-break:break-word;}
   .pi-big + .pi-big, .pi-big + .pi-small, .pi-small + .pi-big, .pi-small + .pi-small{margin-top:var(--sp-2);}
+  /* A line left blank on purpose: the space between two things said apart. */
+  .pi-gap{display:block; height:var(--sp-5);}
 
   /* An open note: the paper stays, the words become the text they are made
      of, and the tools sit under them on the same paper. */
@@ -294,6 +296,24 @@
   .color-line input[type=color]::-webkit-color-swatch-wrapper{padding:0;}
   .color-line input[type=color]::-webkit-color-swatch{border:none;}
   .color-line span{font-family:var(--font-ui); font-size:var(--fs-label); color:var(--ink);}
+  /* A mark's row is named by the drawing it uses, in plain ink: the swatch
+     beside it is already saying what the colour is. */
+  .color-ic{
+    width:26px; height:26px; display:block;
+    background:var(--ink);
+    -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+    -webkit-mask-position:center; mask-position:center;
+    -webkit-mask-size:contain; mask-size:contain;
+  }
+
+  /* ---- which of the two is holding this phone ---- */
+  .who-row{display:flex; align-items:center; gap:var(--sp-5);}
+  .who-pick{
+    padding:0; border:none; background:none; cursor:pointer;
+    opacity:0.3; filter:grayscale(1);
+  }
+  .who-pick.on{opacity:1; filter:none;}
+  .who-pick img{height:52px; width:auto; display:block;}
   .pi-tool{
     font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
     padding:2px var(--sp-2);
@@ -394,6 +414,34 @@
      what :disabled looks like everywhere else in all three apps. */
   .todo-row.is-done .todo-text{text-decoration:line-through;}
   .hw-row{display:flex; justify-content:flex-end;}
+  /* The blank at the foot of a list: the same box as the one a line opens
+     into, so adding and correcting look alike. The name inside is quiet —
+     it is a label, not something anyone wrote. */
+  .today-list .todo-edit-input::placeholder,
+  .today-list .mark-input::placeholder{
+    color:var(--text-muted); opacity:1;
+  }
+  .today-list .todo-row{width:100%;}
+  /* Two names deep, so it out-ranks `input[type="text"]`, which carries the
+     body size and a higher specificity than a class on its own. Unqualified,
+     every blank in this box came out at 22px. */
+  .today-list .todo-edit-input{
+    font-size:var(--fs-label); line-height:24px;
+  }
+  /* Only the planning sheet reads up the middle; the rest read from the left. */
+  .tb-plan .todo-edit-input{max-width:300px; margin:0 auto; text-align:center;}
+  /* A challenge is red in its blank as well as in its wording. */
+  .today-list .todo-edit-input.red,
+  .today-list .todo-edit-input.red::placeholder{color:var(--rust);}
+  .today-list .todo-edit-input.red{border-color:var(--rust);}
+  /* A mark that has been written in stands as wording, centred like the
+     rest, with the box it was typed into gone. */
+
+  /* The errands are set a step up wherever they appear — written out, and in
+     the blank they are written into. */
+  .tb-plan .hw-group:first-of-type .todo-edit-input{
+    font-size:var(--fs-body); line-height:1.35;
+  }
   /* Sized to the line it stands in, or the row would jump as it opens. */
   .todo-edit-input{
     flex:1; min-width:0;
@@ -401,6 +449,40 @@
     padding:0 var(--sp-1);
   }
   .todo-edit-input.prose{line-height:1.45; padding:var(--sp-1);}
+
+  /* ---- the week's count, at the head of the review ---- */
+  .week-tally{margin-bottom:var(--sp-4);}
+  .tally-row{
+    display:flex; flex-wrap:wrap;
+    gap:var(--sp-2) var(--sp-4);
+  }
+  .tally{display:flex; align-items:center;}
+  /* One drawing per time it happened, in that mark's own colour. */
+  .tally-ic{
+    width:20px; height:20px; display:block;
+    background:currentColor;
+    -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+    -webkit-mask-position:center; mask-position:center;
+    -webkit-mask-size:contain; mask-size:contain;
+  }
+  .tally-ic + .tally-ic{margin-left:3px;}
+  /* A face stands in a line of words, so it is measured in em: it is as tall
+     as the words beside it and moves with them when they change size. */
+  .face{
+    height:1.25em; width:auto; display:inline-block;
+    vertical-align:-0.3em; margin:0 0.04em;
+  }
+  /* The week's challenges, now at the head of the 쀼톡 they belong to. */
+  .tally-chal{
+    margin:var(--sp-3) 0 0;
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
+    color:var(--rust); overflow-wrap:anywhere;
+  }
+  /* The week's three sums, under the marks and the challenges. Held to the
+     width of a column rather than the width of the popup: a name at one edge
+     and a figure at the other, a hand's width apart, is not a pair anyone
+     reads as one line. */
+  .talk-cash{max-width:260px; margin:var(--sp-4) 0;}
 
   /* ---- the colour swatch in the note editor, as Options draws it ---- */
 
@@ -415,45 +497,84 @@
      rule inside simply follows: "ink" is black in this box and white outside
      it, and nothing has to restate a colour. */
   .today-list{
+    margin-top:var(--gap-block);
+    /* Drawn at about 30/70, which on a 390px phone left the left column 126px
+       — and 102px inside its padding, where "생활비  1,668,872" wrapped one
+       character at a time. 42/58 gives it 140px, which the longest line needs
+       113px of; the right column keeps 194px, which is more than the diary
+       and the errands were ever using. */
+    display:grid; grid-template-columns:minmax(0, 42fr) minmax(0, 58fr);
+    gap:var(--sp-2); align-items:start;
+  }
+  /* A row's two sheets are NOT tied to each other: each grows on its own, so
+     a long diary leaves the money sheet the height it needs rather than
+     dragging it down the page with white space. What lines them up on a day
+     with nothing written is a floor, not a link — the floor is the height the
+     sheet on the left stands at when it is empty, written out of the same
+     measurements that produce it so it follows if the type scale moves.
+
+     Left, empty: the figure (fs-lead at line-height 1), the weekday under it
+     (fs-label at 1.2), the gap below the pair, three drawings 30px tall with
+     a gap between each, and the sheet's own padding top and bottom. */
+  .tb-plan{
+    min-height:calc(var(--fs-lead) + var(--fs-label) * 1.2 + var(--sp-4)
+                    + 30px * 3 + var(--sp-2) * 2 + var(--sp-4) * 2);
+  }
+  /* Left, with the month's figures in it: the day's heading and its gap, the
+     three sums and the total at line-height 1.5, the rule above the total,
+     and the padding. */
+  .tb-diary{
+    min-height:calc(var(--fs-label) * 1.3 + var(--sp-1)
+                    + var(--fs-label) * 1.5 * 4 + 5px + var(--sp-4) * 2);
+  }
+  /* One sheet of the four. The four names are declared again here, the way the
+     popup does it, so every rule inside simply follows: "ink" is black on this
+     paper and white outside it, and nothing has to restate a colour. */
+  .tbox{
     --paper:#FFFFFF;
     --ink:#111111;
     --text-muted:#6B6B6B;
     --line-b:#9A9A9A;
     --link-blue:#2519FF;
     background:var(--paper); color:var(--ink);
-    padding:var(--sp-5) var(--sp-4);
-    margin-bottom:var(--gap-block);
-    text-align:center;
+    padding:var(--sp-4) var(--sp-3);
+    text-align:left; min-width:0;
   }
-  /* Everything in the box reads up the middle. */
-  .today-list .today-date,
-  .today-list .today-line,
-  .today-list .todo-row,
-  .today-list .hw-row{justify-content:center;}
+  /* What is planned reads up the middle. */
+  .tb-plan{text-align:center; padding:var(--sp-5) var(--sp-3);}
+  .tb-plan .today-line,
+  .tb-plan .todo-row,
+  .tb-plan .hw-row{justify-content:center;}
+  .tb-diary .todo-row,
+  .tb-diary .hw-row{justify-content:flex-start;}
   /* Not flex:1 here: stretched to the full width, a line would sit left of
      centre with the challenge disc pushed out to the edge. Sized to its own
      wording, the disc and the words centre together. */
-  .today-list .todo-text{flex:0 1 auto; text-align:center;}
+  .tb-plan .todo-text{flex:0 1 auto; text-align:center;}
+  .tb-diary .todo-text{flex:1 1 auto; text-align:left;}
   /* Prose needs the width of the paper, not the width of its own wording. */
   .today-list .diary-group .todo-row{width:100%;}
-  .today-list .todo-edit-input.prose{flex:1 1 auto; text-align:center;}
+  .today-list .todo-edit-input.prose{flex:1 1 auto;}
   /* The errands are what the day is read for, so they are set a step up from
      everything else in the box. The diary and the deadlines stay small. */
-  .today-list .hw-group:first-of-type .todo-text{
+  .tb-plan .hw-group:first-of-type .todo-text{
     font-size:var(--fs-body); line-height:1.35;
   }
-  /* The day being written. A button, because pressing it comes back to
-     today after another date has been chosen. */
+  /* The day being written: the figure, and the weekday under it. A button,
+     because pressing it comes back to today after another date was chosen. */
   .today-date{
-    display:flex; align-items:center; gap:var(--sp-3);
-    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
-    color:var(--text-muted);
+    display:flex; flex-direction:column; align-items:flex-start;
+    font-family:var(--font-ui);
     background:none; border:none; border-radius:0; padding:0;
-    margin-bottom:var(--sp-3); cursor:pointer; text-align:left;
+    cursor:pointer; text-align:left;
   }
-  .back-today{
-    font-size:11px; color:var(--rust);
-    border:0.5px solid var(--rust); padding:1px var(--sp-2);
+  .date-num{
+    font-size:var(--fs-lead); font-weight:500; line-height:1;
+    color:var(--ink);
+  }
+  .date-dow{
+    font-size:var(--fs-label); font-weight:400; line-height:1.2;
+    color:var(--text-muted);
   }
   /* A deadline falling on this day. Worked out from the board, so it is not
      a line anyone can edit here. */
@@ -478,24 +599,72 @@
   }
   .opt-btn.selected{border-color:var(--ink);}
 
-  /* ---- the day's three lines ----
-     Name, colon, blank. The blanks line up because the names share a width,
-     which is what makes the three read as one block rather than three. */
-  .mark-group{display:block; max-width:300px; margin:0 auto; text-align:left;}
-  .mark-row{display:flex; align-items:center; gap:var(--sp-2); padding:3px 0;}
-  .mark-label{
-    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
-    color:var(--ink); width:104px; flex:0 0 auto;
+  /* ---- the day's three activities ----
+     One to a line, the drawing at the left and what it was written beside it.
+     Three columns alongside each other would have left each blank a third of
+     a 132px sheet on a phone — about four characters. Down the page, the
+     writing gets everything the drawing does not take. */
+  .mark-list{display:flex; flex-direction:column; gap:var(--sp-2); width:100%;}
+  .mark-row{display:flex; align-items:center; gap:var(--sp-2); min-width:0;}
+  .mark-ic{
+    display:block; padding:0; border:none; background:none; cursor:pointer;
+    color:var(--line-b); flex:0 0 auto;
   }
-  .mark-colon{font-size:var(--fs-label); color:var(--text-muted);}
-  /* The same box every other field in these apps is written in — but the
-     width has to out-rank `input[type="text"]`, which carries width:100% and
-     a higher specificity than a class on its own. Unqualified, this rule lost
-     and the three boxes ran off the right edge of the paper. */
+  /* The drawing is a mask, so one image serves both states and the colour
+     comes from the page rather than from the file — which is what lets the
+     colours set in Options reach the marks. */
+  .mark-ic span{
+    display:block; width:30px; height:30px;
+    background:currentColor;
+    -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+    -webkit-mask-position:center; mask-position:center;
+    -webkit-mask-size:contain; mask-size:contain;
+  }
+  .mark-text{
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
+    line-height:1.3; color:var(--ink);
+    background:none; border:none; border-radius:0;
+    padding:0; margin:0;
+    cursor:pointer; text-align:left; overflow-wrap:anywhere;
+    flex:1 1 auto; min-width:0;
+  }
+  /* The same box every other field in these apps is written in. Two names
+     deep, so it out-ranks `input[type="text"]`, which carries the body size
+     and a higher specificity than a class on its own. */
   .mark-row .mark-input{
-    flex:1 1 auto; width:auto; min-width:0;
     font-size:var(--fs-label); line-height:24px;
-    padding:0 var(--sp-2);
+    flex:1 1 auto; min-width:0; margin:0; padding:0 var(--sp-1);
+    text-align:left;
+  }
+
+  /* ---- 가계쀼, read out of the sheet ----
+     Two readings of the same two figures: what the shown day cost, and what
+     the month has cost so far. */
+  .money-sec + .money-sec{margin-top:var(--sp-4);}
+  .money-cap{
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:500;
+    color:var(--text-muted); margin-bottom:var(--sp-1);
+  }
+  .money-line{
+    display:flex; align-items:baseline; justify-content:space-between;
+    gap:var(--sp-2);
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
+    line-height:1.5; color:var(--ink);
+  }
+  /* The name is as wide as the name and no wider, and neither it nor the
+     figure breaks: Korean breaks between any two characters, so a line a few
+     pixels too narrow came out as 생활 / 비 rather than running over. */
+  .money-line span{flex:0 0 auto; white-space:nowrap;}
+  .money-line b{flex:0 1 auto; font-weight:500; white-space:nowrap; text-align:right;}
+  /* The total is parted from what makes it up by a line, the way a receipt
+     parts them — there is no room here for a heading that says so. */
+  .money-line.sum{
+    border-top:1px solid var(--line-b);
+    margin-top:2px; padding-top:2px;
+  }
+  .money-off{
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:300;
+    color:var(--text-muted); margin:0; line-height:1.4;
   }
   /* The diary sits in the same list as the rest of the day, only quieter: it
      is the day's aside, not an instruction. */
@@ -505,15 +674,39 @@
     font-weight:300; color:var(--text-muted);
     white-space:pre-wrap; line-height:1.5;
   }
-  .diary-group .todo-edit-input.prose{line-height:1.5; text-align:center;}
+  .diary-group .todo-edit-input.prose{line-height:1.5; text-align:left;}
   /* Nothing names the three lists any more, so the space between them is
      what parts them — it has to be plainly bigger than the space between two
      lines of the same list, or they read as one. */
   .today-list .hw-group + .hw-group{margin-top:var(--sp-5);}
-  .today-list .hw-row{margin-top:-4px;}
+  /* The + belongs to the list above it, so it sits close to that list and
+     the gap below it is the one that parts the groups. It was being pulled up
+     by a negative margin into a row sized for a line of text, which left it
+     crowding the last line and adrift from nothing in particular. */
+  .today-list .hw-row{margin-top:0; padding:2px 0;}
+  .today-list .hw-add{width:24px; height:18px;}
   /* The date heading, on paper now, needs a line under it rather than only
-     space — it is a heading, not the first entry. */
-  .today-list .today-date{width:100%; margin-bottom:var(--sp-4);}
+     space — it is a heading, not the first entry. The holiday, when there is
+     one, stands to its right rather than under it: the figure is what the eye
+     goes to and the name only qualifies it. */
+  .day-head{
+    display:flex; align-items:flex-start; gap:var(--sp-2);
+    width:100%; margin-bottom:var(--sp-4);
+  }
+  .today-list .today-date{flex:0 0 auto;}
+  .day-holi{
+    flex:1 1 auto; min-width:0;
+    display:flex; flex-direction:column; align-items:flex-start;
+    padding-top:3px;
+  }
+  .hol{
+    font-family:var(--font-ui); font-size:var(--fs-label);
+    line-height:1.25; overflow-wrap:anywhere; text-align:left;
+  }
+  /* Red is the day off. Japan is where the work is, so it is the one that
+     changes what the day is; Korea is worth knowing and nothing more. */
+  .hol.jp{color:var(--rust); font-weight:500;}
+  .hol.kr{color:var(--text-muted); font-weight:400;}
 
   /* ---- the month grid ----
      Seven days and then a narrow eighth column, which is the week itself:
@@ -547,20 +740,39 @@
   .cal-cell > .cal-sched{width:100%;}
   .cal-cell.empty{background:none; cursor:default;}
   .cal-daynum{font-size:var(--fs-cell); color:var(--ink); display:block;}
-  .cal-cell.weekend .cal-daynum{color:var(--text-muted);}
-  /* The day being written, when it is not today: outlined rather than
-     filled, so today's disc stays the one solid mark on the month. */
-  .cal-cell.picked .cal-daynum{
-    width:22px; height:22px; border-radius:50%;
-    border:1px solid var(--ink);
-    display:flex; align-items:center; justify-content:center;
-    margin:-2px 0 2px -2px;
+  /* Saturday and Sunday are days off, which is what the red says everywhere
+     else on this grid. Grey said "lesser", which they are not. */
+  .cal-cell.weekend .cal-daynum{color:var(--rust);}
+  /* The figure and, beside it, the small square that says Korea keeps this
+     day. Its own row, so today's disc keeps the figure to itself. */
+  .cal-head{display:flex; align-items:flex-start; gap:3px;}
+  /* A day Japan is off, which is the one that decides whether anyone is at
+     work. Two names, so `.cal-cell.today .cal-daynum` still out-ranks it and
+     today stays white on its disc. */
+  .cal-daynum.hol-jp{color:var(--rust);}
+  .cal-kr{
+    width:4px; height:4px; flex:0 0 auto; margin-top:5px;
+    background:var(--text-muted); display:block;
+  }
+  /* The white sheet already says which day is being written, so the date on
+     it needs no second mark of its own. */
+  /* The day being written is a white sheet in a black month — today until
+     another date is pressed, which is what the box underneath is showing.
+     The four names are declared again inside it, the way the popup and the
+     day box do it, so every rule in the cell follows without restating a
+     colour. */
+  .cal-cell.picked{
+    --ink:#111111;
+    --text-muted:#6B6B6B;
+    --line-b:#9A9A9A;
+    background:#FFFFFF;
   }
   /* Today, the 22px rust disc the projects month already draws. A fixed size:
-     a one-figure date and a two-figure date must draw the same circle. */
+     a one-figure date and a two-figure date must draw the same circle. The
+     figure stays white: it is reversed out of the disc, not out of the page. */
   .cal-cell.today .cal-daynum{
     width:22px; height:22px; border-radius:50%;
-    background:var(--rust); color:var(--ink);
+    background:var(--rust); color:#FFFFFF;
     display:flex; align-items:center; justify-content:center;
     margin:-2px 0 2px -2px;
   }
@@ -608,9 +820,10 @@
   }
   .cal-week svg{width:14px; height:14px; fill:currentColor; display:block;}
   .cal-week:hover{color:var(--ink);}
-  /* REVIEW will not fit across a 24px column, so it runs down it. Nothing
-     else in these apps is set sideways, which is rather the point: it marks
-     the week rather than any one day in it. */
+  /* The mark for a week that has been talked about: upright, and the same
+     size as the + it stands in place of. */
+  .talk-mark{width:16px; height:16px; display:block;}
+
   /* 쀼톡 as it is read: the three parts with space between them and no
      headings — the gap says where one ends. */
   .talk-read{
@@ -744,7 +957,7 @@ if('serviceWorker' in navigator){
     <button onclick="setPane('board')" aria-label="Board"><i></i></button>
     <button onclick="setPane('cal')" aria-label="Month"><i></i></button>
   </span>
-  <button class="pane-btn" id="paneBtnOpt" onclick="toggleOptions()">설정</button>
+  <button class="pane-btn" id="paneBtnOpt" onclick="toggleOptions()">Options</button>
 </div>
 
 <!-- ================= PANE 1 — the board ================= -->
@@ -754,8 +967,14 @@ if('serviceWorker' in navigator){
 
 <!-- ================= PANE 2 — the month ================= -->
 <section id="paneCal" style="display:none;">
-  <div class="today-list" id="todayBox"></div>
   <div class="cal-grid" id="calGrid"></div>
+  <div class="today-list" id="todayBox"></div>
+  <!-- Same place and same manner as the board's own text editor: the foot of
+       the pane, quiet, for the one job that is done in writing. -->
+  <div class="board-foot">
+    <button class="btn btn-ghost" onclick="openHoliText()">공휴일 추가</button>
+    <button class="btn btn-ghost" onclick="openCashText()">가계쀼 금액 추가</button>
+  </div>
 </section>
 
 <!-- ================= Options ================= -->
@@ -766,18 +985,38 @@ if('serviceWorker' in navigator){
 <div id="noteOverlay" class="modal-overlay"><div id="noteBox" class="modal-box"></div></div>
 <div id="talkOverlay" class="modal-overlay"><div id="talkBox" class="modal-box"></div></div>
 <div id="dueOverlay" class="modal-overlay"><div id="dueBox" class="modal-box"></div></div>
+<div id="holiOverlay" class="modal-overlay"><div id="holiBox" class="modal-box">
+  <div class="card-panel"><div class="panel-inner">
+    <label class="field-label">공휴일 추가</label>
+    <p class="hint" style="margin-bottom:var(--sp-3);">한 줄에 하루씩. 일, 그 다음 일본 / 한국 차례입니다. 한쪽만 있으면 다른 쪽은 비워둡니다. 여러 달을 한 번에 넣어도 됩니다.</p>
+    <textarea id="holiText" rows="16" spellcheck="false"
+      style="font-size:var(--fs-label);"></textarea>
+    <div class="actions" style="margin-top:var(--sp-3);">
+      <button class="btn btn-primary" onclick="saveHoliText()">넣기</button>
+      <button class="btn btn-ghost" onclick="hideHoliText()">닫기</button>
+    </div>
+    <p class="hint" id="holiMsg" style="margin-top:var(--sp-2);"></p>
+  </div></div>
+</div></div>
+<div id="cashOverlay" class="modal-overlay"><div id="cashBox" class="modal-box">
+  <div class="card-panel"><div class="panel-inner">
+    <label class="field-label">가계쀼 금액 추가</label>
+    <p class="hint" style="margin-bottom:var(--sp-3);">한 줄에 하루씩. 일, 그 다음 생활비 / 취미비 / 쇼핑비 차례입니다. 쉼표와 원 표시는 있어도 되고, 빈 칸과 － 는 0입니다. 이미 있는 날은 덮어씁니다.</p>
+    <textarea id="cashText" rows="16" spellcheck="false"
+      style="font-size:var(--fs-label);"></textarea>
+    <div class="actions" style="margin-top:var(--sp-3);">
+      <button class="btn btn-primary" onclick="saveCashText()">넣기</button>
+      <button class="btn btn-ghost" onclick="hideCashText()">닫기</button>
+    </div>
+    <p class="hint" id="cashMsg" style="margin-top:var(--sp-2);"></p>
+  </div></div>
+</div></div>
 <!-- Options opens over the board rather than replacing it: it is a handful
      of settings, not a third place to be. -->
 <div id="optOverlay" class="modal-overlay"><div id="optBox" class="modal-box">
 <div class="card-panel"><div class="panel-inner">
-    <label class="field-label">이름</label>
-    <div class="actions" style="margin-bottom:var(--sp-3);">
-      <input type="text" id="nameA" style="flex:1; min-width:120px;">
-      <input type="text" id="nameB" style="flex:1; min-width:120px;">
-      <button class="btn btn-primary" onclick="saveNames()">저장</button>
-    </div>
     <label class="field-label">이 기기를 쓰는 사람</label>
-    <div class="actions" id="meRow"></div>
+    <div class="who-row" id="meRow"></div>
   </div></div>
 
   <div class="divider-bleed"></div>
@@ -813,6 +1052,8 @@ if('serviceWorker' in navigator){
       <button class="chk on" onclick="toggleKind(this,'review')"><span class="chk-box"></span>쀼리뷰</button>
       <button class="chk on" onclick="toggleKind(this,'talk')"><span class="chk-box"></span>쀼톡</button>
       <button class="chk on" onclick="toggleKind(this,'day')"><span class="chk-box"></span>쀼일</button>
+      <button class="chk on" onclick="toggleKind(this,'cash')"><span class="chk-box"></span>가계쀼</button>
+      <button class="chk on" onclick="toggleKind(this,'holi')"><span class="chk-box"></span>공휴일</button>
     </div>
     <div class="filter-row" style="margin-top:var(--sp-3);">
       <span class="date-pair">
@@ -851,7 +1092,7 @@ if('serviceWorker' in navigator){
     </div>
   </div></div>
 
-  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-26k</p>
+  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-26z</p>
 </div></div>
 <script>
 /* =========================================================================
@@ -1150,6 +1391,8 @@ const K_SHARED = 'bbyu-shared';   // the day: errands, ticks, diary, challenges
 const K_PEOPLE = 'bbyu-people';   // shared: the two names
 const K_TALKS  = 'bbyu-talks';    // 쀼톡, one per week, keyed by its Monday
 const K_COLORS = 'bbyu-colors';   // the five colours, by slot name
+const K_CASH   = 'bbyu-cash';     // shared: the three sums a day cost
+const K_HOLI   = 'bbyu-holi';     // shared: the days off, by country
 /* The two per-person day stores. Nothing writes to them any more — the ticks
    are no longer told apart by person — but they are still read once, so a
    day already ticked is not lost. */
@@ -1170,6 +1413,8 @@ let shared = {};                  // {'261025': {sched[], out, pm, diary[], chal
 let talks  = {};                  // {'261026': {good[], better[], etc[]}} by Monday
 let colors = {};                  // {'쀼훈':'F2FF00', ...}, falling back to the defaults
 let people = {a:'령', b:'동'};   // the wife, then the husband — the 숙제 block uses the same two
+let cash   = {};                  // {'261026': {live, hobby, shop}}
+let holi   = {};                  // {'261012': {jp:'스포츠의 날', kr:''}}
 let me = 'a';
 let viewMonth = '';               // YYMM being looked at
 let pane = 'board';
@@ -1194,8 +1439,14 @@ function dateFromCode(code){
   const s = String(code);
   return new Date(2000 + parseInt(s.slice(0,2),10), parseInt(s.slice(2,4),10) - 1, parseInt(s.slice(4,6),10));
 }
-/* Monday first, like every other calendar in these two apps. */
-const DOW = ['월','화','수','목','금','토','일'];
+/* Monday first, and written the way the month grid in Time writes it — one
+   letter a column, which is what the other two apps use for a grid this
+   narrow. The names in full are for the heading, not the columns. */
+const DOW = ['M','T','W','T','F','S','S'];
+const MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+/* Monday first, lower case, as Time writes a weekday short. */
+const DOW_SHORT = ['mon','tue','wed','thu','fri','sat','sun'];
 function dowIndex(d){ return (d.getDay() + 6) % 7; }
 
 /* =========================================================================
@@ -1218,15 +1469,19 @@ function safeGet(key){
 }
 
 async function loadAll(){
-  const [b, s, p, t, cl, da, db] = await Promise.all([
+  const [b, s, p, t, cl, da, db, ca, ho] = await Promise.all([
     safeGet(K_BOARD), safeGet(K_SHARED), safeGet(K_PEOPLE), safeGet(K_TALKS),
-    safeGet(K_COLORS), safeGet(kDaily('a')), safeGet(kDaily('b'))
+    safeGet(K_COLORS), safeGet(kDaily('a')), safeGet(kDaily('b')),
+    safeGet(K_CASH), safeGet(K_HOLI)
   ]);
   board  = parse(b, {});
   shared = parse(s, {});
   talks  = parse(t, {});
+  cash   = parse(ca, {});
+  holi   = parse(ho, {});
   colors = Object.assign({}, DEFAULT_COLORS, parse(cl, {}));
-  people = Object.assign({a:'령', b:'동'}, parse(p, {}));
+  people = Object.assign({a: HW_WHO[0], b: HW_WHO[1]}, parse(p, {}));
+  renameOldNames();
   migrateDays(parse(da, {}), parse(db, {}));
   try{ me = localStorage.getItem(ME_KEY) || 'a'; }catch(e){ me = 'a'; }
   if(WHO.indexOf(me) === -1) me = 'a';
@@ -1277,17 +1532,26 @@ function normDay(raw){
    each one fills its square with lives in COLOR_SLOTS, which Options can
    change; it is looked up when the square is drawn rather than kept here. */
 const DAY_MARKS = [
-  {key: 'out', label: 'OutP (C.S.)'},
-  {key: 'inp', label: 'InP'},
-  {key: 'ex',  label: 'Ex.'}
+  {key: 'out', label: 'OutP (C.S.)', icon: 'data:image/png;base64,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'},
+  {key: 'inp', label: 'InP',         icon: 'data:image/png;base64,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'},
+  {key: 'ex',  label: 'Ex.',         icon: 'data:image/png;base64,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'}
 ];
 const markDone = (s, k) => !!String(s[k] || '').trim();
+/* ON is a value; ON WITH NOTHING SAID is the bare mark. Kept apart so a day
+   can be ticked without anyone having to name what it was. */
+const MARK_BARE = 'O';
+const markText = (s, k) => {
+  const v = String(s[k] || '').trim();
+  return v === MARK_BARE ? '' : v;
+};
 
 const saveBoard  = () => appStorage.set(K_BOARD,  JSON.stringify(board));
 const saveShared = () => appStorage.set(K_SHARED, JSON.stringify(shared));
 const saveTalks  = () => appStorage.set(K_TALKS,  JSON.stringify(talks));
 const saveColors = () => appStorage.set(K_COLORS, JSON.stringify(colors));
 const savePeople = () => appStorage.set(K_PEOPLE, JSON.stringify(people));
+const saveCash   = () => appStorage.set(K_CASH,   JSON.stringify(cash));
+const saveHoli   = () => appStorage.set(K_HOLI,   JSON.stringify(holi));
 
 /* Reading helpers that never write — a month or a day with nothing in it yet
    comes back as an empty shape rather than being created on sight. */
@@ -1298,6 +1562,16 @@ function weekKey(code){
   const d = dateFromCode(code);
   return ymd(new Date(d.getFullYear(), d.getMonth(), d.getDate() - dowIndex(d)));
 }
+/* The seven day codes of the week a day belongs to, Monday first. */
+function weekDays(code){
+  const mon = dateFromCode(weekKey(code));
+  const out = [];
+  for(let i = 0; i < 7; i++){
+    out.push(ymd(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i)));
+  }
+  return out;
+}
+
 function talkOf(key){
   const t = talks[key] || {};
   return {
@@ -1423,7 +1697,7 @@ function renderMonthLabel(){
 const TIER_NAMES = {'쀼훈':1, '숙제':3};   // anything else is the middle tier
 /* The categories the board always offers, top to bottom. A month missing one
    of these is offered a + for it rather than simply not having it. */
-const TIER_ORDER = ['쀼훈', '아젠다', '크리에이티브 아젠다'];
+const TIER_ORDER = ['쀼훈', '아젠다', '크리에이티브 아젠다', '기타'];
 const HW_NAME = '숙제';
 /* The paper each kind of note starts on, so the three of them are told apart
    at a glance before anyone has picked a colour. Taken from the four the
@@ -1438,6 +1712,7 @@ const COLOR_SLOTS = [
   {key: '쀼훈',            label: '쀼훈',             def: 'F2FF00'},
   {key: '아젠다',          label: '아젠다',           def: '00E5FF'},
   {key: '크리에이티브 아젠다', label: '크리에이티브 아젠다', def: '2CE17A'},
+  {key: '기타',            label: '기타',             def: 'C9C9C9'},
   {key: 'OutP',           label: 'OutP (C.S.)',     def: 'F2FF00'},
   {key: 'InP',            label: 'InP',             def: '00E5FF'},
   {key: 'Ex.',            label: 'Ex.',             def: 'FF4602'}
@@ -1452,9 +1727,46 @@ function colorSlot(key){ return hex6(colors[key]) || DEFAULT_COLORS[key] || ''; 
 function colorOf(note){ return note.color || colorSlot(baseName(note.name)) || ''; }
 /* The square a day's mark is drawn as, one per line of the day. */
 const markColor = key => colorSlot({out:'OutP', inp:'InP', ex:'Ex.'}[key]);
-/* The two of them, in the order they are written. The husband is 동, the wife
-   is 령; these are the only names the 숙제 block uses. */
-const HW_WHO = ['령', '동'];
+
+/* The same colour, brought down only as far as it has to be to read on white
+   paper. The month is black, so a mark can be as bright as it likes there;
+   the day box is white, and the yellow the month uses disappeared on it. */
+function onPaper(hex){
+  const v = hex6(hex);
+  if(!v) return hex;
+  const r = parseInt(v.slice(0,2),16), g = parseInt(v.slice(2,4),16), b = parseInt(v.slice(4,6),16);
+  const lum = (0.2126*r + 0.7152*g + 0.0722*b) / 255;
+  if(lum <= 0.62) return v;
+  const k = 0.62 / lum;
+  const to = x => Math.round(x*k).toString(16).padStart(2,'0').toUpperCase();
+  return to(r) + to(g) + to(b);
+}
+/* The two of them, in the order they are written. These are the only names
+   the 숙제 block uses, and the two the faces below stand in for. */
+const HW_WHO = ['령그리', '동그리'];
+
+/* Their faces, cut out with a sticker's white rim and nothing behind it.
+   Written in wherever their names appear — a note, a day, a heading — and
+   sized in `em`, so a face is as big as the words around it and grows and
+   shrinks with them. */
+const FACES = {
+  '령그리': 'data:image/png;base64,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',
+  '동그리': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHsAAACACAYAAAArkhalAAAtxklEQVR42u19eXQUVb7/51b1vifpTkiAhAARCFuUxQioqCwKuIEyiM8VGPXhBpxx5nn8jeBwxHHQEdRRGdQ3yiqgMCiQwYfIIooDgsgmEGQLCZg93Ul3V9X390fqltVNJyTQCWHMPadPOkl31a37ud99uQz/QYOIBACM/8oYU6L+z+J1L8YYNebeLWGw/ySAGWNy1P86AOgLQAFwH4CuAOgin5t//zCABQBkAEcYY99F3VtUP0vRG6MV7MYBzNS5C4wxSff3jgA6AXgYQHsV3KRmmFIIwLcADgL4UAX/hG5eBgDypQadXSagAoCgY6F6gNsDGAtgEIChAOxRl5EURWGCIECWZUZUu94Gg6HR85Ekid8foiiSoigQBIEARF+sDMDnAN4BsI0x5tdRu3KpQGctAFBRNw+lIbJOpZQBAMYBuD8KYEVln5BlWQDABEEAY5GPGg6HUVlZGfH3cDiMsrIyWCwW2O12CILA7wePx6P9rpsHFEUBABJFUdGtqf6D+wCsAPA3xlghf+ZokfMfCbZOxpJKJcp5KLsLAAuAawCY1X89BKCX7qN84QRFURgRQQ+wLMuQJAnff/89tm/fDiLCmjVrkJ+fD6PRCE7tsiwjGAxCFEUYjUbtGpIkoVu3bhgyZAgkSULv3r2Rm5sLk8mk3YMDzxjj1K6ooDMdtf8FwF8YY2F1HdCcihxrRlYsqMpKtBI1WCdXfwOgt04JYgA61zNPCYBIRExlqRGLv337dhw6dAjLli3DmTNncOrUKRQUFEAURYiieA4rZ4xFfJ9vAs7CZVmGLMtITk5G+/bt0aFDB9x5553Izs5Gr16/7D1ZljnonNMoOla/B8AzjLF1zU3lrIlBFqMVEyK6EkAqgKcB2AAMPN+1FEUhALJu8QXdZoAoitpnd+7ciby8PGzcuBHff/89SkpKIIoiBEGA0WjUKDkazAaYWtpLkiSEQiEoigJZlpGamorevXtj9OjRGDRoEDp16sTnrd9ApHIgDvoCAC8wxg5xk7CpZTlrIpAF/W4lou4AnlRBvjX6K4oq+NQF0uakUh473zxLS0vxz3/+E6tWrcLWrVtRUVEBALBarRBFUQO1sQCfD3j+XpIk1NTUgDGGtLQ03HbbbXj44YfRo0cPjSuIosi/w3UKEUAxgMcBLGOMyURk0CufLRbsaJCJyAVgPIDbAQzjSgsRcTnFlSgxmjr17LCsrIx/B4FAAGfOnEFxcTFKS0tBRDh69ChWrVqF77//HoqiwGazaQDHC9zGUH04HEZ1dTW8Xi/Gjx+Pp59+Gm3bttUoXafkySrgALAKwCOMsaKmZOssTkALXNEgorYAJqu2bkqUfGVEJHIA9NotZ43r1q1DUVERFEXBhg0bsH//fo2KgsEgqqurEQwGEQqFAAA1NTUwm80wm81gjEGWm13JPQd4QRAgSRICgQAyMzMxefJkTJw4EVarFbIs63ULrsiJAE4DmMQY+6ypKJzFAWgDY0wiIjOA/wfgEQBevZasmldQFCWCgqurq7F582acOHECCxcuhN/vx4EDBxAIBCAIwjlKFF8kvSLGGNObQC3HNanOMxwOo6qqCiNGjMAf/vAHDBgwIBaVS6oslwHcxxhb3BQUzuLBtomoD4B5AK7Sa8kAGAeBP1hVVRW2b9+ORYsW4ciRI9ixYwckSdLYoMVigSAI9bLh5mDN8QRdFEVUVVXBarVi2rRpePLJJ+FwOCDLsn7zKzr95EnG2OvxpnB2EUCDMUZEdA+AvwHw6EHmQHGQDx8+jAULFuCLL77Ad999h3A4DEEQYLVaNepsLhl7KYYoilAUBZWVlRg0aBDmzJmDnj17RgOu19jnMMaeJiIjYyx8ScDm8ln1Yr2rerAiFA79A+zatQvvvfceVq1ahaKiIoiiCKvVqjer8GsaBoMBVVVV8Pl8mDlzJu6777765HhcKZw1Fmh1MkYASwDcGU3NXC6fOXMGL774Ij766CMUFxfDZrPBYDC0SPl6Kag8HA4jFAphxowZ+N3vfqdxtHoAv2gKZ40Amqls2wxgEYDRAMIq8BEKx8cff4znn38eP/74I+x2u8bC/lNZ9IUMvlZ+vx9PPPEEZs6cCZPJpF9HPUt/hDE272IBZw0FWt1lJgAfABij0yC1CVZXV2Pu3Ll48cUXoSiKZmq0gly/xl5WVob7778fb731FoxGYywKlwGMZ4ytuBgtvaFxPlE1r6arQIdU4DX5XFBQgIceeggbN26Ew+HQPEuto14igizLSEhIwIIFC2A2mzF37lyN6lkt4oL6WkhEAcbY2gsFnDVgQlwhywWwFoBDb1YJgoCCggLcfffd+Pbbb+HxeFpBvkA5Xl5ejieeeAKvvPJKtNLGI2hnAGQDKFU3Q6OUH6EhJpYqpxeo5pUQDfRdd92FHTt2ICEhoRXoCxyyLMPtduONN97Aiy++qOk5OpwkAMkA3lBBFhqtJ5zv/+qFp6A23UcCIHAZXFBQgLFjx2Lnzp1wuVwIh8OtqF3EUBQFTqcTf/rTn/Dqq69CFEW9+9egrv84IhqjilUxLmxcl4npBXAIgJuzE07Vjz32GObNmwev19sKdByVNsYYqqqq8Pe//12zw1W/BSf1MwByAPyMRmSyCudRygi1ITg3p2oO9MKFC7FkyRIkJia2Ah1npQ0ALBYLZsyYgaNHj+pZOvdztAEwS1XS2EVRts55kozazIoknbKGEydO4MYbb0RRUVFEWk/riK/C5vf7cd1112HFihWaW1klQAVADWrz8PYgKn+gsZTNN8FIAD4VeE1Wz5o1CydPnoTFYmkFugkVNrvdjo0bN2L+/PkQBIFTN8fGDuB1FXy6KMpWza1NqE3RVRRFERlj2LFjB0aNGoVQKKQFMFpH08lvRVHgcDiQl5eH7OxsvYeNU/IwAF80hLqFulg4EWUD6KqTFWCMYf78+SgrK4tI92kdTSe/DQYDfv75Z7zwwgvR6829mrN1srzRbFxQWUMflYUrPMn+0KFDyMvLg8Vi+dUHM5qTndtsNuTl5WHdunVQix04djJqs3HvUDmx2FiwOSt4DAAJgqBVUXz66acoKCiAyWRqpepmZuehUAizZ8+G3++PLlYQADyuhpypUWCrkS0TgHbQpeqGQiF8/PHHMBqNrVR9CZwtNpsNW7duxcKFC/W5dqKqmQ8G0F8Vv2KDwFZ3B1CbFdqulovIAgB88803OHTokBaGax3NL7+NRiPeeecdFBcXa6lbKicmAPer4pc11vTKgK5EBwA2b96M4uLimCm/raN5qNtisWDfvn1YtGiRpqnjl3Tkm4koBbXFFEK9YKvJCRIRuVGbIQpFUURRFBEIBLBu3bpWxawFULcoiliyZAnKyso4dQsqK88AMEClbqGhlF2D2kI6TQk7fvw4jh07dkFlrq0jvtRttVqxe/dubNiwQU/dULnwg7r39YLN3w9HbQ2WwoMhK1euRGFhoZZD1jouLXXLsoylS5dqmjp+SUG+gogs+CVgUifYTAe2GYDClYAzZ860rnILAttsNmP79u344YcfuBtVUOvlugK4XrWoxIaw8QpuzAuCgOPHj2P16tWwWq2t8roFaeWnTp3Ctm3boBO3nOX6oog3EmyVXctEZMcvVZYCAK1mSafqt44WAvg///lPrRBD52iZyEV8XZTNVC0uFUB3/c5Ys2YNKioqzmkx0TouvVaen5+P06dPc0WNU3I7FVDlfGycp61qF/3uu++02uPW0bLk9tGjR7Fx40ZNU+dEWle/t1jkqn2QMQaz2dxK1S10SJKEU6dOcay4vd0RtTXxiFbS6kRRFEWcPXsW3333XWvgowXL7bVr1yIQCPDUJU7enWMpaUJdFwJqKy8PHDjQ6g9vwXK7oKAAgUAg+t+hhrDxc9X1VhbeYgePflVXV0cQKc7jQeM/r0ZtrpnEgW9l3y2bjRcUFCAvL4//jeN4FxEZo82vaLK16gFuBbrlU3YoFMKxY8eg85cAtR0w7Gr2CqvP9NJArqmp0Xp5XQ4jyrnwqxm88lM3grFYeb0r4/f7LxvFTBAEhEIhBIPBXxXgjDHU1NRo7+vSvc4LdjAYvCwemDeoyc7OxlVXXYXKyspfRZIFl9vffvstAoHAeUPQQiPZQ4sEOhAIoH379vjwww+xePFiZGdno7q6+j8ecA72wYMHUVhYeH7uV98/3W53i14wg8EAv9+P9u3bY9myZcjKykJaWho++OADeDwerSPTfzob5z1UGws20/N+i8XSIqs+eEO88vJydO7cGcuXL0dOTo7WNbhnz56YPXu21sfl1yDDG6JEC/V5Xlqi6WUwGLTG8HfddRfWrFmDHj16aGWtvKZ53LhxmDVrFgKBQHQ3wV/tEPQmF4BvUJuhoiWctxSzi3f1LSsrQ1paGubMmYOFCxeiXbt257TJ5IBPnjxZo/BQKPSrz4yN3u5SNGVfysavvBUkAFRUVICIMHnyZPzrX//CI488Ui+b1gO+ePFipKamNkhj/TWBHUHG6enpyMjIQDgcblYK5yDLsozS0lIwxvBf//Vf2LhxI/7617+iffv2muxWFKXOHmv8GrfccgtWrlyJLl26oKKi4lcLuKGuxZZlGe3atUP//v1x8OBBmM3mJqdy3h0oFAqhsrISqampePjhh/Hggw8iKSkJoVAI+/bt07hOu3bt4Ha7te9HdRjSAOdnfHzyySd44IEH8NVXX8Htdv/qui1Gg31OYXdTa+O89FdRFPj9fsiyjMzMTEyZMgU33ngjTp8+jQULFuCTTz5BaWkpTCZTrSYZCqFXr17o168fcnNzMWzYMNjttYcARStkBoMBsiwjIyMDq1atwsyZM/G3v/0NBoMBJpPpkvcov1Rgi/ilnAQAkJiYGDcWru+4zwGuqqoCADidTgwZMgS33XYbrrvuOqxfvx5Tp07F3r17EQqF4HK5tAJDfq1vv/0WmzZtgt1uR48ePTBp0iTce++9WvGhHnDel8TtduMvf/kLunfvjpkzZ+LkyZNwOBzaJrmcHSznXX/1gxxNB4AdALJkWVZEURR2796Nm2+++aJcp/ojk4LBIBRFgcFggM1mQ25uLvr164c777wTPXr0wL///W9MnToVW7Zsgc1mg81mgyAIqKmpQSgUimjoarFYYDabIUkSqqurIUkSBg8ejDfffBOdOnWKaXLpm+nm5+fjueeew+rVq0FEsFqtlxVr5+LW6XTiyy+/RMeOHXlhXwmAjoyxct5zNkIh050I8DKA38myLImiaDh06BCuvfZajaIuZASDQe2IpC5duiAtLQ233norMjMzceWVV2qAvP/++3jqqacgSRKcTieICIFAAOFwGJmZmejcubP2WVmWsX//fpw8eRJms1lra80dLUuWLEHPnj3rtLH1bbKXL1+O2bNnY9euXTAYDJcN6Lxf7IABA7By5UrY7fZ6wTZE7XoG9aA0zmp9Ph969uyJbdu2Nbqwj1Pkfffdh2HDhiEjIyMCXM46+cEvL7/8MogILpcLwWAQgUAAN9xwAx588EH0798fHTt2jLj+/v37sWnTJsybNw/79u2D3W5HQkICjhw5gqlTp2LFihXapokWRfoOgnfddReGDx+ORYsWYf78+dizZ89lATo/gKZ///6w2+2QJKleS0OI+jIBOInajgtQFAUejwcDBgxodDox16q7deuG2bNnY/To0ejTp49mLsmyrMXK+blbnEWXl5fD7XbjzTffxMqVKzFu3Dh07NhRW3huanXr1g2PPPIIPv/8c/z3f/83KioqEAwGwRjDzz//rB1HUd9m5G0rnE6ndq033ngDPXv2hN/vh9/v1+bYUuP6ZrM5Wm6ft7CPq6TzUNsI1UC1AxkZGbDb7Y3SykVRRE1NDUaNGgWHw6Edeqb3bXNZzs+6fOaZZ+DxeJCbm4vFixdj4sSJmsnHqZMDxAMAkiQhISEBr7zyCmbPno2kpCSkp6fjxRdfRGJiYoOSL7hFwPuHTpw4EXl5eZg7dy5uvPFGzakTDoe1ecc63/NSjDqCIJZoRTtaZvPm8UkA8gG4FEUhQRDY2bNnMXDgQBQVFTWoklPf0mnNmjX1ys7ocfToUfh8PjgcjujDz86riTLGcPz4cRgMBqSlpcVk3w3RavXu13A4jB07dmDhwoXYsmULfvzxR+1+ZrNZY5uxUrkapCHr5qc/K6Whw2g0YunSpRg8eDBkWZbF2olvADAEauvwmKaX2se6mIiOAeipsgNms9mQlpaGgoKCBnU05NkTQ4cORY8ePRoceVIUBZmZmdr7hnq69Aespqenx7S1G+u946AbjUbk5uYiNzcXBQUF2LdvH5YvX44jR47gwIEDOHPmjHYfvjGjOVd9z8spk3MWbvufT0/g8jolJUU7B1TXkH43gGT1UDjtzDX9avJjm55E7UHjiiAIjHfaGzFiBLZu3RpxmMv5Fv+OO+7QzIOGBCH0cvtCgNL3ZrvYKJcedP5KS0tDWloahgwZAiLCzp07kZ+fj4KCAmzYsAGFhYWQJAkVFRWoqKhAeXl5naDxk4+cTidcLhesViuSkpJQWFiIgwcPwm63nxdwIoLD4dCIgjHGG+pMAXAbEQ1jjOVzwA1RZter6gfPMVN69uwJl8vVoB1XU1ODLl26aPKuMQvfELarD4BEfz7ecjT65F39Yap9+vRBnz59AABPPPEEgsEgwuGwdqLvsWPHUF5eHnNOTqcTycnJaNOmDdLS0uBwOGCxWHDq1Cnce++92L17d70UznPuRowYAafTqdfEeX+0TgDWEtFwAMeJSDCorFtSKXoKok7z4Wzp+uuvR1ZWFn744Yd6TTBOyVdddRXatGkT91hy9PUuRC7HIwqnF2XcJ2+1WmG1WuFyudC5c+dGX5+LoTlz5mDo0KENMvnS0tLAGIPBYNCvjYjaw3quAPAaak9pEgTUttNIBfCCuiOEaKBXr16N0aNH46effjpvHzSuZIwePTruh7Jxat60aROWLl2K4uLiZs+k0SuDa9aswdq1azVq58+rl8Xne3Euxct5JElCTk4OHn300Xrz6BRFgd1ux8svv4wnn3xS68Kg08yNKuAjAVzHGJNBRAIR/Vk1s8JERIqikKIoFAqF6MknnySz2Uw2m40SEhIoMTGREhISYr4SExPJ7XZTVlYW7du3j/i14jFkWSYiorfeeoucTieJokhDhw6loqKiuN6nIfNQFIWee+45MpvNZDKZ6OmnnyZFUbQ5Xszgz3HixAnq3Lkzud3uOtc8MTGRXC4XmUwmatu2LW3cuDFirYhIUn8u1apFiOhHIlKISFYUhSRJonA4TJMmTSJRFMnr9ZLP5yOPx1Pvzb1eL5lMJho3blz0TeOyAEeOHKH09HRyuVyUmppKgiDQhAkTNACaA2giohUrVpDVaiWv10ter5dcLhd9+eWXtasrSRd9H36NadOmkdFoJK/XG3O9XS4XJSUlUXJyMjmdTkpLS6OtW7fq58oByAdq67p6AUjgXJizkz/+8Y947733kJiYCKC2YMDpdMLj8UCW5TrlpCAISE9PjysL52Ljww8/RGFhIcxmM4LBINxuNzZs2IBTp041Czvnz/Tpp59GiLJwOIx3330XoVAorvrJkCFD4Ha7Y643P5hdURTU1NTAarWipKQEzz//PAKBAF8PXrOdQkS3C6g9ec8LXffhnTt34r333oPL5QIAVFZWom/fvli/fj0WL14Mp9MZ0zMlyzJcLhfGjx8focXGw+EfDoc1uaQ/1LWoqAjr1q1r8hAld7Ts3bsX69ev1xoKcX/Arl27tIyei910fMMMGjQIbdu2jTiWg3smb731VmzZsgWzZ8+GyWTSgkdbtmzBJ598ou+RRqhtdXalAKAaAPGFIiLMmzcPpaWlMBqNCAQC6N+/P5YuXYouXbrgmmuuwY033ojq6upzdjE39ONJYXxTHT169JxgDPe/nzx5stkUNL/fj6qqqgifAGMMwWAQZ8+ejZvWz0Ou3bt3hyRJEdE+m82Gxx9/HElJSXj44YcxadIkVFVVaQT20UcfaVxGRwDV/DQ4xndUWVkZNm/eDIvFAlmWYTabMX36dLRp00YLcz744INwOBwRlCQIAoLBIHr37q15seJpEvF4djTl8DBfvFh0Q8K10d8zmUw4evSoVjobDw7DOcngwYO1efFzQ8aOHYsrr7wSkiSBiDBp0iR07NgRwWAQJpMJe/fuRUlJSfT6/0KafIL79u1DaWkpDAYDampq0L17dwwcOFArNSEiDBgwAIMGDYqgbk5lV199NRITE+uV6xfr3IgeZWVlF7259Bk09ZlcZWVlMZ+NiFBZWRl3TuJyubR7hcNhpKenY8qUKZo7FqhNDE1PT0c4HNaObN6zZ885G0+Ifpht27bh559/htFohCzLGDt2rObJ4XLAbDZj3LhxMW3AeLPxxsi4Cx2yLKOoqKjeMC7/u8fjidkTrqkPeuc1bffccw+ysrI0Rw53pPzmN7/R9Ifi4mLs3LnzHOePEItK9KnD3EMT7b8eMWIEunXrdk6JbFPFfetLIuAWQ2MXmwcfpk6din79+mHkyJE4dOhQvdey2WznbHLeQDYjI6NJFEP9XGIFohhjmjLN079icRkh1g7Sj+h0JE7dLpcL9957ryZH+f9SUlLi7qIEgNTUVHTo0OGcYj2uV1wINTPG8PHHH+Odd95BIBDAhg0bsGrVqnrlbjgcjkiK4EppZmYmhg4dGhdOcz69IhYxRce0Y3Fd4Xxf4qm7sdjm3XffjczMTI26iQjl5eVxB1uWZfh8PvTr1y9ic/Fs0auvvvqCZXZhYSEURYHJZILFYoHf769XQ77iiivQu3dv1NTURIDKAxmXakSHg2Nt1nPA9ng8Eazi9OnTMdmGoihIS0vDuHHjIth+XYsVjzF48GAYDAbNZy9JErKysnDttddeMNi8Bl0f0dKnTUU/c1JSEq699lpNZnJFdsyYMdrh8Jcig6WsrCzCx85z6GOCzSeYm5sLn8+nscuPPvronMI5PUvJzc2N2OFN8aA8rnzHHXdg1KhRKC4uBlCbKvTb3/4Wdrv9ghc5eiNzhcdkMkXbqRr3mjRpEpKTk+H3+1FZWYkrrrgCY8aMaZIIHO9xVtd1efBk2bJl2vvExETk5OSc8z1DNGvu1q0bnE4n/H4/TCYTTp48ib1796JXr17nhBe5uVXf4sVzmEwmzJkzB7IsY9u2bfjTn/6E8ePHa7v5YjVyi8WCJUuWoKKiAp06dUKfPn2Qm5t7DnV36NABc+fOxbPPPguLxYL58+cjIyOjSUqDi4qKItY1OrwLAGfPnsWJEydgMBggSZKWERwLbEV1qWmJfwMHDsTChQvh8Xhw4sQJ/P3vf8frr7+usa5oAPT2aVMVzfF7tGnTBgsXLsTx48eRlZUVN/udb5jTp0/jrbfe0pIPH3/8cfz+97+H2WzWxAcR4fbbb0f//v1hMBjg8/niDjQHifv9uSuaJ0vwjSeKIlavXo38/Hy4XC74/X6kp6fD6/VGg02C6jdl/CFEUcSYMWO0GiiXy4UPP/wQK1euhNFoRDgcjvCLt2vXDl6vV8uUyM/Pj3tAIBpws9ms2ZoXy0n48xgMBoiiCKPRCKfTiYSEBCiKghkzZuD999/Xn6WlLXRqamqTAM0pOBQK4cCBA5p+kpKSgr59+0a4kQsLC/Huu+9qukwoFMKoUaO0rFzdvMwgooFEVKqGOBVFUSgcDtPIkSPJZDJRcnIyuVwu6tSpE33xxRfnhOPKysrommuuIYfDQYmJiZSamkr79++Pa4gzVsjzYq/NQ6L79++nzMxMYoyR0WikhIQE8ng85HA4tPBl3759qbS09Jy4OY/7N8XzERFVVlbSlVdeSU6nk9xuN/Xo0YOKi4sjPvvUU0+R0Wgkn89HLpeLOnfuTPn5+fr1V4goRETDDYyxrURUjNoD0YmImMFgwEsvvYR9+/ahpKQEZrMZZ86cwT333IOJEydi4sSJSExMhN1uh9lsRlJSkraLJEm6qFKhi3WdNpZLdO3aFfPmzcOWLVvgcDjQvXt3MMYwZcoUFBQUQBAElJaWwu/3w+PxxGS1TTVCoVCETa/PgCksLMQbb7yBf/zjH3A6ndrnH374YWRmZnJuo6hK+HHGWB5TY55vAngUtflnBs6WFixYgIkTJ8Jut0MURYTDYa0NVUJCAjp16oSioiIcOHBAszsFQcDatWvRt2/fy6KXSSwN+sCBAxg5ciRKSkpAREhOTsbmzZuRkpLSLDlvfN22b9+OO+64Q4tBcOvHZDJhz549KCgogNVqhdFoRHl5OW666SasWrVKS8RUj1gWAGwCcAN/4KuIqFJNS1L02RIvvfQSOZ1Ocjgc5PP5tIwVh8NBFotFS1fSZ6pMmTKFeMbL5TBkWSZJkigYDJKiKPTnP/+ZBEGgNm3akNlspgceeIDC4XCzpT7xdXvttdfIZDJFZKrYbDayWq3kdrs1PMxmM3Xo0IF27doVLT7D6s9xQG2misgY2wlgnUrVCrffFEXB73//eyxbtgxdu3ZFWVkZAoGApiS5XC7YbLZzdvvZs2fjmrzQHIEUbltXVlbis88+0/K2GWMYOHCglr3ZnENfoszFhsPhgNPphCAICAQCqKiowIABA/DJJ5+gd+/e0YepiwAOAlhJRFp2qQhgMoATgiAw9YNatuLw4cORl5eHv/71r8jJyUFycjIAoKqqSsty5NEuk8mEI0eOoKCgoEX2UDvfqK6uxk8//QSDwYDq6mpkZmZi1KhRTerzjhYrgiCgoqICeXl5mjeTE05ZWRnKysrgcrnQvXt3zJ49G2vXrkVOTk602OTlu39kjNWAl3rxsySIaISOm4Sj2QoRUSAQoBMnTtC6deto4cKF9Nlnn9G///1vGjBgANntdvL5fGS1WjXNvak08qbS8gOBAD344INktVrJ5XLR66+/3qzPwUXFqVOnKCMjgzweDzmdTurRowetXr2a3n77bXr77bfphx9+IL/ff04ypDqC6s9FKq6G6B3FAZ9IRAEd4HLtteR6ZfBjjz1GBoOBUlJSyGaz0axZsy4rua1f6GAwSMuXL6dNmzY1qYlVn7z+4IMPyOPxaMQzfvz4elObVZwkHZH+QEQ+NVVciPaNy2pN0HzUHry9SfWwCbUcTIAoipKiKJKiKJIsy4osy5pT4rrrroPD4dACCHl5eZrH6XIZnFWaTCaMGTMmIsDS3PrH119/jaqqKk13GjVqlNa8Ty0wIEVRJEEQJLVSU1BltAHAUgA3MMbOqvNXzol6qZ3nRcbYD4yx6wGMA7AdwBHuXhUEwSAIgkEURUEURRgMBgiCgOuuuw4ejweSJMFqteLAgQP4+uuvo0+CvSwGT2po7nlzD+bJkyexceNG2O12BINBeL1edOnSRYuyqW07mdqJkr9OAvgSwDjG2DjG2Fm1DFupM8TJKVx9v5QxdjWAbAA5qD3677cAJgH4mm8QRVHg8/kwZMgQBAIBmEwmFBcX4//+7/+aPF0nGqB4gKTvBhHLBub3aQr7GgDy8vLw008/wWw2o7q6Gr169UJOTg5X3vjDHVXxmKT+zGGMDWaMLVVZt9ZLpSGLx4hIrOv0NyKapcqGEJczS5YsIZfLRV6vl5xOJ+Xk5MR0Mzan7GtKF228n0mWZQqFQjRy5EiyWCyUnJxMFouFXn31Vf0zcV/ImzEwEWKdrlsnZet2NzHGZLUbA1MvZCAis6rdfYHag9VFTgHDhg1Dhw4dEAqFYDabcfjw4SZP4OdcIxgMYt68eXjuueewa9euiNYZ8eAYXP/47LPP8D//8z9YvXp1XOU4dzdv2bIF27Zt08xZn8+HESNG6AMwompGLdHjwVm26jWL2+Ly3mkiERXyTS7LMsmyTDNnziSz2UzJyclktVpp1KhRmmeqKQvtZs2aRYIgkMlkonbt2tHcuXMpFAppFChJUoPnwKlYzx2OHDlCkydPJrfbTUajkex2Oy1ZsiRuZhmf29ixY8lqtVJycjKZTCZ66KGHiK8t924SURERpXFqbmr5aFDBfombaHyyx44do65du5Lb7Sav10tut5vWrFnTpLZqMBikAQMGkMPhoNTUVHK73WSxWGj48OG0bt26iPty4Ot6RW+IgwcP0owZM6hz585kMpkoKSmJ2rZtS4wxevTRR+MiMvj3161bp1VnJiUlUUJCQnRlJjerPolpPzcR2NwmH6DadrIezOnTp5PZbKaUlBSyWq00cuRICoVCTVJtye+5YMECcjgc5HA4KDk5mbxeL1mtVnI6nXTrrbfSihUr6OTJkw26/6lTp2jDhg00YcIEysjIILPZTC6Xi5KTkykpKYlMJhNlZGRolZsXu4llWaZAIEDDhw/XqNpisdDYsWOppqYmVgnub1XR2iiwWRyA/wG1Z24riqIIjDEcO3YMN998M06fPg2TyYTq6mrMmTMHEyZMaHB/lQuR2xs2bMCzzz6LHTt2wO12aw1qKysrYbfb4XK5cNNNN6FHjx5a6DA5ORlEhDNnzsBgMODgwYP417/+Bb/fj5KSEjgcDu3gWb/fD1EUcfvtt+PZZ59Ft27dLjoKxtfj/fffx+TJk7V8OkEQsHTpUtx00038MzxcWYra7oVljdK4L5a61d11v37X8V34wgsvaLLb4XBQTk4OnTlzpsnYOafYwsJCeuqppygpKYnMZjMlJiZSSkoKeb1e8ng8ZLFYyGg0ai+r1RrxN4vFQh6Ph5KSkqhNmzaUkJBAZrOZ7HY7DR48mD799NO6XJQXzJWOHDlCnTt3JpfLpXnMJkyYECuCpRDRaxdC1RetqKkauoOIdnN3HVdufv75Z+rTp4/GVq1WK40YMYKqqqqarHheLzu/+uorGjdunAa6zWbTWHGbNm20V3JyMqWkpGi/JyUlkcPhIJvNRmazmVJTU2n06NG0bNkyzRetU5gu2pSTJInuu+8+slgs5PP5yOl0UlZWFp0+fVpv7inq+lYRUadmUczqkd2cumX9oq9atYpsNhslJSWRz+cjo9FIzzzzTO02DYebJWVp69atNGPGDBo0aBBlZ2eTzWYjk8kU82U0Gik5OZn69etHt9xyC7399tu0ffv2JrHf+fM/++yzWncF7p+YP39+Xe0y3tKve6OdRXEwwwQAdtWXzhvlibxG6fHHH8d7770Ht9utdQng8vt8jVXj4Y3iPgBJklBQUIBvvvlG609WUlKC6upquFwuuFwuGAwGZGVlIScnR2t9za9VVyuuCxn8ufnJBkajEQaDASUlJbj77ruxaNEifbiS1AzgSgD9GGOH9Y3smpu6eS+1J2M14amurqabb75Z0zI9Hg95PB5atmxZk1K4Xi5eCMvlJlq89Qv+vBs3bqS2bdtqGScOh4OuuuoqzWKIkW0y/WKoOp6yWyQiIxFti6Ws7dmzh9q2baspIB6PhxISEmj58uXaAjSHO/V8NjYHt6kyRvl6fPrpp9S+fXtyOp3aeni93ujmN/oGOAeIyMQ9ZZc6SiSoP7PVCZ6Ty7ZmzRry+XzaTna73ZSQkECLFi1qMn92Sxn653r55Ze1llY+n48SExPJbDbTvHnzoj+rqEQTJKLBl5yq61DWZtaV6RINOG+1NXXqVC0fuilY56VMZOTPUlxcTJMmTdJy0/nzWywWeu2112Jtdr5+c5vNW9ZYdq6+/zAacC6rOOB2u13zSBkMBsrNzaV169ZFUENzR8riLS74WLVqFfXt25fMZrPWU44XVcSgaL32vY2IbC2Cfddje7uI6EjUxDXAP//8c7riiivIbDZr6bB2u508Hg898sgj9OOPP0aAfrlQenTwZN++fTRhwgRyuVxafp7P5yOLxULZ2dn0+eefxwKaP2wpEXW4JDb1BcjvHkR0Ihpw/mD5+fl01113kdFoJLfbTcnJyZSYmEgmk4kyMzPp+eefpyNHjpzDElsatcfS2o8ePUrTp0+n9PR0MpvNWhfCxMREMhgMdMMNN9Dhw4djWSOy+qohoptblJxugPzOJqKTdcnwcDhMc+fOpYyMDDKZTOTz+TTzzGg0UqdOnWjatGm0e/fumBTEwW+uDcDvJctyTAti27ZtNG3aNMrKyorYxF6vlywWCyUmJtL06dOpvLy8PtYdIqIxlwXQMezvrkR0PBpwPZXu3buX7r//fjKZTFrlCS8oNJlMlJ6eTmPHjqUlS5ZEsPhojVdvPuk3wvk2RPTn9K5M/TVjfe/AgQO0YMECGj16tFadwd2yXDZbrVYaPXq0ZlrF8KuHdax7WFMpZKypKVzNaesG4H/VrFVZva+gj/oAwIIFC/D2229jx44dEEVR82KFQiFUVVXBZrPB4XDglltuQdu2bXHrrbeibdu2cLvdDTrh4GJHcXExJEnC999/r/VMXb9+Pfx+P4LBIBwOh9ZSjDfpy87OxrRp0zB+/Hit6ELniSN1PQyoPc76t4yx70lt9n9Zgc1luJq1agQwE8AzPLqnpr5GdOevqqrC4sWLMX/+fOzduxeSJMFut2sH0UiSBL/fD0VRkJKSAovFgk6dOmHgwIFwuVwwmUzIzs5Ghw4d4PF4IhoARScS6s/n0Lsyq6qqUFJSguPHjyM/Px/hcBgnT57EF198gcrKSpSXl6OkpAQGg0EreuRdkwKBAERRRM+ePTFu3Djcf//9WuuuqIoN7fkBrALwgHroWpMA3Sxg65Q2UvPZHgDwBwBd8UvXBzGaysvLy5GXl4fly5dj8+bNmj9bfzofz1kPh8MRZcIejwcejwc2m03rDMH95LwrEvBLi8zoDsPV1dWorq5GeXm51hCIMQaz2czTeLUm+/waAJCQkICBAwfi7rvvxrBhw7QS36gYvv6ZiwE8DmCZygHFuOaQXQqw9UET9aG86kM+r1sAoLYFNotu2LN7925s3boVeXl5OHr0KA4fPqwFJvhJOxaLRastk2UZkiRFdOnnSQ763/UHweqpn7NZg8EQcZRTTU1NxHUZY+jYsSM6deqEIUOG4Prrr9dO4tEnEarXjxBfABYAeIExdojb0E2diNDshrp+96rKyHMArtUHhQCIHPToqpLjx49j165dOH36NFasWIGqqipUVlbi8OHDWhYoYwxGo7HejBh9K+tYWS+cyiVJ0j7fuXNnuFwuJCYmYsyYMUhKSkLv3r0jOhuS2mJLBZl07Jqv9Q4AzzHG1kWvR1OPS+KV0VO5+vvtqD2MZgBqz7bg1K4AEBRFEUh3ZolevsqyjJKSEqxfvx6VlZVgjGHPnj3Yvn17vb1I+f9idUfkLSG7du2KIUOGgDEGq9WKYcOGwev1alUZ0QCr89PmjchU7fUA/sEYW6j3RzRnqPKSuuBUO1Lh7IuIrgfwAIDbASTqw9OqnOOtJhhjTKiPcquqqiK6IUaP8vJyiKKonZ0dK6+NN6WtK3eMiBRBEEj9DL+R/gvVABYBWM4pubmpucWAXdfDE1EKgGsA3A2gF4AesfMTFBIEgdQNIOhZdLwKCjkbV6/L78d0RypFj3wA3wJYCeArxtjxWNzsUowW5VxXWRuLAt4M4CoA6QAmALACSALQrQVMeR9qsz0rALwCwA9gN2OsOtqbeClBbpFgR8t0FXipDvY/BIBTZfH9ANyM2rO/m+KZeBeDfagth1VUxeszxlioDu8hqeZmiylhbfFNT/TAcxOtrgVs6jBgLNNIF5Hi91aaJZf7Asb/B2yEbIiWacU9AAAAAElFTkSuQmCC'
+};
+const RE_FACE = new RegExp('(' + Object.keys(FACES).join('|') + ')', 'g');
+
+/* A week that has been talked about. The word REVIEW was wrong twice over —
+   it is a 쀼톡, not a review, and a word set sideways in a 24px column was
+   the only thing in the app anyone had to tilt their head for. */
+const TALK_ICON = 'data:image/png;base64,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';
+
+/* Run over text that has ALREADY been escaped: the names carry nothing that
+   escaping would have changed, so putting the tags in afterwards is safe and
+   keeps the faces out of anything that is still raw. */
+function withFaces(html){
+  return String(html == null ? '' : html).replace(RE_FACE, (m) =>
+    '<img class="face" src="' + FACES[m] + '" alt="' + m + '">');
+}
 
 /* The + every one of these apps draws: two bars in a 24px box, no wording. */
 const PLUS_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true">' +
@@ -1490,7 +1802,10 @@ function parseBoardText(text){
   let cur = null;
   String(text || '').split('\n').forEach(raw => {
     const line = raw.replace(/\r$/, '').trim();
-    if(!line) return;
+    /* Inside a note a blank line is spacing the writer put there; between two
+       notes it is only what separates them, and trimBlanks takes those off
+       each note's ends afterwards. */
+    if(!line){ if(cur) cur.lines.push({s: false, t: '', done: false, due: ''}); return; }
     if(/^<.*>$/.test(line)) return;                      // the month header
     const head = /^\[(.+?)\]$/.exec(line);
     if(head){
@@ -1507,6 +1822,7 @@ function parseBoardText(text){
     const l = parseLine(line);
     if(l) cur.lines.push(l);
   });
+  notes.forEach(n => { n.lines = trimBlanks(n.lines); });
   return notes;
 }
 
@@ -1514,17 +1830,38 @@ function parseBoardText(text){
    in the box it is read from — the title says which note this is and the
    swatch sets the paper — so anything that looks like either is dropped
    rather than taken for content. */
+/* A blank line is a blank line. Dropped, two paragraphs written apart on a
+   note came back joined, and the only way to space them was more wording.
+   Trailing ones go: they are what the editor leaves behind, not spacing. */
+/* Prose keeps the shape it was written in: a blank line between two
+   paragraphs is part of the writing, the way it is in a post-it. Only the
+   blanks at the two ends go — those are stray returns, not spacing. */
+function trimTextLines(t){
+  const lines = String(t == null ? '' : t).split('\n')
+    .map(x => x.replace(/\s+$/, ''));
+  while(lines.length && !lines[0].trim()) lines.shift();
+  while(lines.length && !lines[lines.length - 1].trim()) lines.pop();
+  return lines;
+}
+
+function trimBlanks(lines){
+  const out = lines.slice();
+  while(out.length && !out[out.length - 1].t) out.pop();
+  while(out.length && !out[0].t) out.shift();
+  return out;
+}
+
 function parseLines(text){
   const out = [];
   String(text || '').split('\n').forEach(raw => {
     const line = raw.replace(/\r$/, '').trim();
-    if(!line) return;
+    if(!line){ out.push({s: false, t: '', done: false, due: ''}); return; }
     if(/^<.*>$/.test(line) || /^\[(.+?)\]$/.test(line)) return;
     if(/^\(#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})\)$/.test(line)) return;
     const l = parseLine(line);
     if(l) out.push(l);
   });
-  return out;
+  return trimBlanks(out);
 }
 
 /* The four marks a line may carry. Escaped first, so nothing in the text can
@@ -1568,11 +1905,11 @@ function mdToHtml(raw){
     links.push({t: t, u: u});
     return '\u0000' + (links.length - 1) + '\u0000';
   });
-  s = mdEmphasis(s);
+  s = withFaces(mdEmphasis(s));
   return s.replace(/\u0000(\d+)\u0000/g, (m, i) => {
     const l = links[+i];
     return '<a href="' + l.u + '" target="_blank" rel="noopener">' +
-      mdEmphasis(l.t) + '</a>';
+      withFaces(mdEmphasis(l.t)) + '</a>';
   });
 }
 
@@ -1711,13 +2048,29 @@ function parseColorText(body){
 }
 
 function peopleToFullText(){
-  return '<이름>\n\n' + (people.a || '령') + '\n' + (people.b || '동');
+  return '<이름>\n\n' + (people.a || HW_WHO[0]) + '\n' + (people.b || HW_WHO[1]);
+}
+
+/* The two were called 령 and 동 before they were called 령그리 and 동그리.
+   A heading written under the old names is renamed once, on the way in, so
+   the faces find it. Nothing else is touched: these are whole headings, not
+   text anyone wrote inside a line. */
+const OLD_NAMES = {'령': '령그리', '동': '동그리'};
+function renameOldNames(){
+  if(OLD_NAMES[people.a]) people.a = OLD_NAMES[people.a];
+  if(OLD_NAMES[people.b]) people.b = OLD_NAMES[people.b];
+  Object.keys(board).forEach(mm => {
+    notesOf(mm).forEach(n => {
+      if(!isHomework(n.name)) return;
+      n.lines.forEach(l => { if(!l.s && OLD_NAMES[l.t]) l.t = OLD_NAMES[l.t]; });
+    });
+  });
 }
 
 /* Everything, or the part of it a filter asks for. `want` names the kinds,
    `from`/`to` are day codes and may be empty. */
 function allToFullText(want, from, to){
-  const w = want || {review: true, talk: true, day: true};
+  const w = want || {review: true, talk: true, day: true, cash: true, holi: true};
   const inRange = code => (!from || code >= from) && (!to || code <= to);
   const blocks = [];
 
@@ -1737,6 +2090,24 @@ function allToFullText(want, from, to){
     Object.keys(shared).filter(c => !dayEmpty(c)).sort()
       .filter(inRange).forEach(c => blocks.push(dayToFullText(c)));
   }
+  /* One block a month rather than one a day: thirty-one headings for three
+     figures each would be a page of headings. */
+  if(w.cash){
+    const months = {};
+    Object.keys(cash).forEach(code => { months[code.slice(0, 4)] = true; });
+    Object.keys(months).sort().forEach(mm => {
+      const t = cashToFullText(mm, from, to);
+      if(t) blocks.push(t);
+    });
+  }
+  if(w.holi){
+    const months = {};
+    Object.keys(holi).forEach(code => { months[code.slice(0, 4)] = true; });
+    Object.keys(months).sort().forEach(mm => {
+      const t = holiToFullText(mm, from, to);
+      if(t) blocks.push(t);
+    });
+  }
   return blocks.join('\n\n\n');
 }
 
@@ -1747,7 +2118,7 @@ function allToFullText(want, from, to){
    ----------------------------------------------------------------------- */
 function parseAllText(text, baseYY){
   const yy = baseYY || todayCode().slice(0,2);
-  const out = {colors: null, people: null, board: {}, talks: {}, shared: {}};
+  const out = {colors: null, people: null, board: {}, talks: {}, shared: {}, cash: {}, holi: {}};
   let kind = null, arg = '', buf = [];
 
   const flush = () => {
@@ -1759,6 +2130,12 @@ function parseAllText(text, baseYY){
     } else if(kind === '이름'){
       const names = body.split('\n').map(s => s.trim()).filter(Boolean);
       if(names.length) out.people = {a: names[0], b: names[1] || '동'};
+    } else if(kind === '가계쀼'){
+      const mm = parseMonthHead(arg, yy);
+      if(mm) out.cash[mm] = parseCashText(body);
+    } else if(kind === '공휴일'){
+      const mm = parseMonthHead(arg, yy);
+      if(mm) out.holi[mm] = parseHoliText(body);
     } else if(kind === '쀼리뷰'){
       const mm = parseMonthHead(arg, yy);
       if(mm) out.board[mm] = parseBoardText(body);
@@ -1786,7 +2163,13 @@ function parseDayText(body){
   let sec = null;
   String(body || '').split('\n').forEach(raw => {
     const line = raw.trim();
-    if(!line) return;
+    if(!line){
+      /* A blank line is spacing inside the diary and nothing anywhere else:
+         everywhere else it is what parts one section from the next, and an
+         errand with nothing in it is not an errand. */
+      if(sec === 'diary') s.diary.push('');
+      return;
+    }
     const head = /^\[(.+?)\]$/.exec(line);
     if(head){
       const name = head[1].trim();
@@ -1804,6 +2187,9 @@ function parseDayText(body){
     }
     if(sec) s[sec].push(line);
   });
+  /* The blank that parted the diary from whatever followed it belongs to the
+     parting, not to the writing. */
+  s.diary = trimTextLines(s.diary.join('\n'));
   return s;
 }
 
@@ -1812,6 +2198,7 @@ const BLANK_FORM =
   '[쀼훈]\n\n' +
   '[아젠다]\n\n' +
   '[크리에이티브 아젠다]\n\n' +
+  '[기타]\n\n' +
   '[' + HW_NAME + ']\n' + HW_WHO[0] + '\n-\n' + HW_WHO[1] + '\n-';
 
 /* =========================================================================
@@ -1854,7 +2241,8 @@ function nextName(mm, base){
 
 function noteBodyHtml(note){
   return note.lines.map(l =>
-    '<span class="' + (l.s ? 'pi-small' : 'pi-big') + '">' + mdToHtml(l.t) + '</span>'
+    l.t ? '<span class="' + (l.s ? 'pi-small' : 'pi-big') + '">' + mdToHtml(l.t) + '</span>'
+        : '<span class="pi-gap"></span>'
   ).join('');
 }
 
@@ -1879,7 +2267,7 @@ function homeworkHtml(note){
   return '<div class="hw-block">' + groups.map(g => {
     if(!g.who && !g.items.length) return '';
     return '<div class="hw-group">' +
-      (g.who ? '<div class="hw-who">' + escapeHtml(g.who) + '</div>' : '') +
+      (g.who ? '<div class="hw-who">' + withFaces(escapeHtml(g.who)) + '</div>' : '') +
       g.items.map(it =>
         '<div class="todo-row' + (it.l.done ? ' is-done' : '') + '">' +
           '<button class="todo-check" aria-label="done"' +
@@ -1930,6 +2318,38 @@ function pinHtml(note){
       '<button class="pi-tool done" onclick="closeNote()" aria-label="완료">✓</button>' +
     '</div>' +
   '</div>';
+}
+
+/* ---- the week, counted, at the head of its own 쀼톡 ---------------------
+   What the two of them actually did that week, which is the thing the 쀼톡
+   is held to talk about. A square per time in that line's own colour, and
+   the challenges written out under them — the count says how often, the
+   wording says what.
+   ----------------------------------------------------------------------- */
+function weekTallyHtml(key){
+  const days = weekDays(key);
+  let html = '';
+
+  /* Squares and nothing else. A name beside each colour said twice what the
+     colour already says, and the count is the whole point: three squares is
+     three times. They run together within a kind and part between kinds. */
+  DAY_MARKS.forEach(m => {
+    const n = days.filter(c => markDone(sharedOf(c), m.key)).length;
+    if(!n) return;
+    const c = onPaper(markColor(m.key));
+    const one = '<span class="tally-ic" style="color:#' + escapeAttr(c) +
+      ';-webkit-mask-image:url(' + m.icon + ');mask-image:url(' + m.icon + ');"></span>';
+    html += '<span class="tally">' + new Array(n + 1).join(one) + '</span>';
+  });
+
+  const chals = [];
+  days.forEach(c => sharedOf(c).chal.forEach(t => chals.push(stripMd(t))));
+  const line = chals.length
+    ? '<div class="tally-chal">' + escapeHtml(chals.join(' / ')) + '</div>' : '';
+
+  if(!html && !line) return '';
+  return '<div class="week-tally">' +
+    (html ? '<div class="tally-row">' + html + '</div>' : '') + line + '</div>';
 }
 
 function renderBoard(){
@@ -2135,7 +2555,7 @@ function renderDuePicker(){
         '<path d="M7 3.5 L18.5 12 L7 20.5" fill="none" stroke="currentColor" stroke-width="4.2"' +
         ' stroke-linecap="square" stroke-linejoin="miter"/></svg></button>' +
       '<span class="month-label" style="font-size:var(--fs-body);">' +
-        y + '. ' + (m + 1) + '</span>' +
+        MONTHS[m] + ' ' + y + '</span>' +
       '<button class="step-btn" onclick="stepDueMonth(1)" aria-label="Next month">' +
         '<svg class="chev" width="11" height="11" viewBox="0 0 24 24" aria-hidden="true">' +
         '<path d="M7 3.5 L18.5 12 L7 20.5" fill="none" stroke="currentColor" stroke-width="4.2"' +
@@ -2321,6 +2741,272 @@ function armed(el, label){
    same three lists the day popup draws, so today — the day actually being
    written — needs no popup at all. The popup stays for every other day.
    ----------------------------------------------------------------------- */
+/* =========================================================================
+   가계쀼 — what a day cost, in three sums.
+
+   Nothing is fetched. The household sheet lives somewhere else and keeping a
+   live link to it meant a script, a deployment and a token for four numbers a
+   month — more machinery than the numbers are worth. So the month is pasted
+   in instead, one line a day:
+
+     <가계쀼_2610>
+
+     일   생활비 / 취미비 / 쇼핑비
+
+     9    42,471 / 43,732 / 0
+     10   22,707 / 61,393 / 168,200
+
+   The same block is what the backup writes and what the data editor shows, so
+   a figure can be corrected in any of the three places.
+   ========================================================================= */
+const CASH_FIELDS = [
+  {key: 'live',  label: '생활비'},
+  {key: 'hobby', label: '취미비'},
+  {key: 'shop',  label: '쇼핑비'}
+];
+const num = v => { const n = Number(v); return isFinite(n) ? n : 0; };
+const won = n => String(Math.round(num(n))).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+function cashOf(code){
+  const c = cash[code] || {};
+  return {live: num(c.live), hobby: num(c.hobby), shop: num(c.shop)};
+}
+const cashSum = c => c.live + c.hobby + c.shop;
+const cashEmpty = c => !c.live && !c.hobby && !c.shop;
+/* Whether the month has anything at all. A day with nothing in a month that
+   has plenty is a day that cost nothing and says so; a day in a month with
+   nothing at all has never been pasted, which is a different thing. */
+function cashMonthHas(mm){
+  return Object.keys(cash).some(code =>
+    code.slice(0, 4) === mm && !cashEmpty(cashOf(code)));
+}
+
+/* Whatever was written, read as a number: commas, a won sign and a trailing
+   원 are all stripped, and a dash or a blank is nothing spent. */
+function cashNum(s){
+  const t = String(s == null ? '' : s).replace(/[^0-9.-]/g, '');
+  if(!t || t === '-' || t === '.') return 0;
+  const n = Number(t);
+  return isFinite(n) ? Math.round(n) : 0;
+}
+
+/* One month's lines. A line starts with the day, then the three sums in the
+   order the heading gives them. Anything that does not start with a figure —
+   the heading itself, a note, a blank — is passed over. */
+function parseCashText(body){
+  const out = {};
+  String(body || '').split('\n').forEach(raw => {
+    const line = raw.trim();
+    const m = /^(\d{1,2})\s*일?[:\s]\s*(.+)$/.exec(line);
+    if(!m) return;
+    const parts = m[2].split('/');
+    out[pad2(parseInt(m[1], 10))] = {
+      live:  cashNum(parts[0]),
+      hobby: cashNum(parts[1]),
+      shop:  cashNum(parts[2])
+    };
+  });
+  return out;
+}
+
+/* The day in a column of its own, so a month reads as a column of figures
+   rather than a ragged left edge where the 9th sits one place in from the
+   10th. The same rule for the money and for the holidays, because the two
+   are pasted the same way and often read side by side. */
+const dayCol = code => (String(parseInt(code.slice(4), 10)) + '    ').slice(0, 4) + ' ';
+const c0 = code => cashOf(code);
+
+function cashToFullText(mm, from, to){
+  const days = Object.keys(cash).filter(code =>
+    code.slice(0, 4) === mm &&
+    (!from || code >= from) && (!to || code <= to) &&
+    !cashEmpty(cashOf(code))).sort();
+  if(!days.length) return '';
+  return '<가계쀼_' + mm + '>\n\n일   ' +
+    CASH_FIELDS.map(f => f.label).join(' / ') + '\n\n' +
+    days.map(code => dayCol(code) +
+      won(c0(code).live) + ' / ' + won(c0(code).hobby) + ' / ' + won(c0(code).shop)
+    ).join('\n');
+}
+
+/* =========================================================================
+   공휴일 — which days are off, and where.
+
+   Two countries, told apart because they mean different things here: Japan is
+   where the work is, so a Japanese holiday is a day genuinely not worked and
+   is written in red; a Korean one is worth knowing — a call to make, a date
+   everyone back home is keeping — but it is not a day off, so it is quiet.
+
+   Pasted in the same way the month's money is, one line a day:
+
+     <공휴일_2611>
+
+     일   일본 / 한국
+
+     3    문화의 날 /
+     23   근로감사의 날 /
+   ========================================================================= */
+function holiOf(code){
+  const v = holi[code] || {};
+  return {jp: String(v.jp || '').trim(), kr: String(v.kr || '').trim()};
+}
+const holiEmpty = v => !v.jp && !v.kr;
+
+function parseHoliText(body){
+  const out = {};
+  String(body || '').split('\n').forEach(raw => {
+    const line = raw.trim();
+    const m = /^(\d{1,2})\s*일?[:\s]\s*(.+)$/.exec(line);
+    if(!m) return;
+    const parts = m[2].split('/');
+    const v = {jp: (parts[0] || '').trim(), kr: (parts[1] || '').trim()};
+    if(!holiEmpty(v)) out[pad2(parseInt(m[1], 10))] = v;
+  });
+  return out;
+}
+
+function holiToFullText(mm, from, to){
+  const days = Object.keys(holi).filter(code =>
+    code.slice(0, 4) === mm &&
+    (!from || code >= from) && (!to || code <= to) &&
+    !holiEmpty(holiOf(code))).sort();
+  if(!days.length) return '';
+  return '<공휴일_' + mm + '>\n\n일   일본 / 한국\n\n' +
+    days.map(code => {
+      const v = holiOf(code);
+      /* Nothing on the Korean side leaves a space hanging off the end. */
+      return (dayCol(code) + v.jp + ' / ' + v.kr).replace(/\s+$/, '');
+    }).join('\n');
+}
+
+function openHoliText(){
+  document.getElementById('holiText').value = holiToFullText(viewMonth) ||
+    '<공휴일_' + viewMonth + '>\n\n일   일본 / 한국\n\n';
+  document.getElementById('holiMsg').textContent = '';
+  document.getElementById('holiOverlay').classList.add('show');
+}
+function hideHoliText(){
+  document.getElementById('holiOverlay').classList.remove('show');
+}
+
+/* A year's worth arrives in one paste, so every month in the text is taken,
+   not only the one on screen. A day written blank on both sides is a day
+   being cleared. */
+async function saveHoliText(){
+  const text = document.getElementById('holiText').value;
+  const p = parseAllText(text);
+  let months = Object.keys(p.holi);
+  if(!months.length){
+    const bare = parseHoliText(text);
+    if(!Object.keys(bare).length){
+      document.getElementById('holiMsg').textContent = '읽을 줄이 없습니다.';
+      return;
+    }
+    p.holi[viewMonth] = bare;
+    months = [viewMonth];
+  }
+  let n = 0;
+  months.forEach(mm => {
+    Object.keys(p.holi[mm]).forEach(dd => { holi[mm + dd] = p.holi[mm][dd]; n++; });
+  });
+  document.getElementById('holiMsg').textContent =
+    months.length + '개 달, ' + n + '일 넣었습니다.';
+  renderCalPane();
+  saveHoli().catch(() => {});
+  setTimeout(hideHoliText, 700);
+}
+
+/* The two names beside the date. Japan first and in red: it is the one that
+   decides whether anyone is at work. */
+function holiHtml(code){
+  const v = holiOf(code);
+  if(holiEmpty(v)) return '';
+  return '<div class="day-holi">' +
+    (v.jp ? '<span class="hol jp">' + withFaces(escapeHtml(v.jp)) + '</span>' : '') +
+    (v.kr ? '<span class="hol kr">' + withFaces(escapeHtml(v.kr)) + '</span>' : '') +
+  '</div>';
+}
+
+/* ---- what the day cost, under the day's own marks --------------------- */
+function moneyHtml(code){
+  const mm = code.slice(0, 4);
+  if(!cashMonthHas(mm)){
+    return '<p class="money-off">달력 아래 <b>가계쀼 금액 추가</b>로 이 달 금액을 넣습니다.</p>';
+  }
+  const c = cashOf(code);
+  const line = (name, v, cls) =>
+    '<div class="money-line' + (cls ? ' ' + cls : '') + '">' +
+      '<span>' + name + '</span><b>' + won(v) + '</b>' +
+    '</div>';
+  return '<div class="money-sec">' +
+      '<div class="money-cap">' + parseInt(code.slice(4), 10) + '일</div>' +
+      CASH_FIELDS.map(f => line(f.label, c[f.key])).join('') +
+      line('합계', cashSum(c), 'sum') +
+    '</div>';
+}
+
+/* ---- the week's three sums, inside 쀼톡 -------------------------------- */
+function weekCashHtml(key){
+  const tot = {live: 0, hobby: 0, shop: 0};
+  let any = false;
+  weekDays(key).forEach(code => {
+    const c = cashOf(code);
+    if(cashEmpty(c)) return;
+    any = true;
+    CASH_FIELDS.forEach(f => { tot[f.key] += c[f.key]; });
+  });
+  if(!any) return '';
+  const line = (name, v, cls) =>
+    '<div class="money-line' + (cls ? ' ' + cls : '') + '">' +
+      '<span>' + name + '</span><b>' + won(v) + '</b>' +
+    '</div>';
+  return '<div class="talk-cash">' +
+    CASH_FIELDS.map(f => line(f.label, tot[f.key])).join('') +
+    line('합계', cashSum(tot), 'sum') +
+  '</div>';
+}
+
+/* ---- pasting a month in ----------------------------------------------- */
+function openCashText(){
+  document.getElementById('cashText').value = cashToFullText(viewMonth) ||
+    '<가계쀼_' + viewMonth + '>\n\n일   ' +
+    CASH_FIELDS.map(f => f.label).join(' / ') + '\n\n';
+  document.getElementById('cashMsg').textContent = '';
+  document.getElementById('cashOverlay').classList.add('show');
+}
+function hideCashText(){
+  document.getElementById('cashOverlay').classList.remove('show');
+}
+
+/* The block says which month it belongs to, so a text pasted while another
+   month is on screen still lands on the right days. Without a heading it is
+   taken as the month being looked at. */
+async function saveCashText(){
+  const text = document.getElementById('cashText').value;
+  const p = parseAllText(text);
+  let months = Object.keys(p.cash);
+  if(!months.length){
+    const bare = parseCashText(text);
+    if(!Object.keys(bare).length){
+      document.getElementById('cashMsg').textContent = '읽을 줄이 없습니다.';
+      return;
+    }
+    p.cash[viewMonth] = bare;
+    months = [viewMonth];
+  }
+  let n = 0;
+  months.forEach(mm => {
+    Object.keys(p.cash[mm]).forEach(dd => {
+      cash[mm + dd] = p.cash[mm][dd]; n++;
+    });
+  });
+  document.getElementById('cashMsg').textContent =
+    months.join(', ') + ' — ' + n + '일 넣었습니다.';
+  renderCalPane();
+  saveCash().catch(() => {});
+  setTimeout(hideCashText, 700);
+}
+
 /* Which day the part above the calendar is showing. Today until a date is
    pressed; pressing today's date, or the heading, comes back. */
 let pickedDay = null;
@@ -2330,7 +3016,6 @@ function renderToday(){
   const code = shownDay();
   const d = dateFromCode(code);
   const weekend = dowIndex(d) >= 5;
-  const isToday = (code === todayCode());
 
   /* The tasks falling due today are not written into the day — they are
      worked out from the board, so moving a deadline moves them with it. */
@@ -2341,19 +3026,32 @@ function renderToday(){
   const dues = duesOn(code).map(t =>
     '<div class="due-sched">' + mdToHtml(t) + '</div>').join('');
 
+  /* Four sheets in two rows. The left column is the day as a record — which
+     day it is, what was done on it, what it cost; the right column is the day
+     as writing — what is planned for it, and what was made of it. Written in
+     reading order, which is the order the grid lays them out in: the two
+     sheets of a row stand the same height, so the left one sets the floor for
+     the right and the right grows past it when there is more to say. */
   document.getElementById('todayBox').innerHTML =
-    '<button class="today-date" onclick="pickDay(null)">' +
-      (isToday ? '오늘 &middot; ' : '') + (d.getMonth()+1) + '. ' + d.getDate() +
-      ' (' + DOW[dowIndex(d)] + ')' +
-      (isToday ? '' : '<span class="back-today">오늘로</span>') +
-    '</button>' +
-    /* The day's own errands first and the deadlines under them: what was
-       written for today outranks what merely falls due on it. Both inside the
-       one group, so the + closes the pair rather than splitting it. */
-    dayListHtml(code, 'sched', dues) +
-    (weekend ? '' : checksHtml(code)) +
-    dayListHtml(code, 'chal') +
-    dayListHtml(code, 'diary');
+      '<div class="tbox tb-day">' +
+        '<div class="day-head">' +
+          '<button class="today-date" onclick="pickDay(null)">' +
+            '<span class="date-num">' + d.getDate() + '</span>' +
+            '<span class="date-dow">' + DOW_SHORT[dowIndex(d)] + '</span>' +
+          '</button>' +
+          holiHtml(code) +
+        '</div>' +
+        (weekend ? '' : checksHtml(code)) +
+      '</div>' +
+      /* The day's own errands first and the deadlines under them: what was
+         written for today outranks what merely falls due on it. Both inside
+         the one group, so the + closes the pair rather than splitting it. */
+      '<div class="tbox tb-plan">' +
+        dayListHtml(code, 'sched', dues) +
+        dayListHtml(code, 'chal') +
+      '</div>' +
+      '<div class="tbox tb-money">' + moneyHtml(code) + '</div>' +
+      '<div class="tbox tb-diary">' + dayListHtml(code, 'diary') + '</div>';
 }
 
 /* Pressing a date moves the part above the calendar onto it; there is no
@@ -2387,7 +3085,8 @@ function renderCalendar(){
     const t = talkOf(k);
     return '<button class="cal-week" onclick="openTalk(\'' + k + '\')"' +
       ' aria-label="쀼톡">' +
-      (talkEmpty(t) ? PLUS_SVG : '<span class="mark">REVIEW</span>') +
+      (talkEmpty(t) ? PLUS_SVG :
+        '<img class="talk-mark" src="' + TALK_ICON + '" alt="쀼톡">') +
       '</button>';
   };
 
@@ -2401,14 +3100,14 @@ function renderCalendar(){
        rather than two empty boxes that can never be filled. */
     let marks = '';
     if(!weekend){
-      marks = '<div class="cal-marks">' +
-        DAY_MARKS.map(m =>
-          '<span class="cal-sq"' +
-            (markDone(s, m.key)
-              ? ' style="background:#' + escapeAttr(markColor(m.key)) +
-                ';border-color:#' + escapeAttr(markColor(m.key)) + ';"'
-              : '') + '></span>').join('') +
-        '</div>';
+      /* Only what was written. Three empty outlines on every weekday of the
+         month said nothing and crowded out what did. */
+      const done = DAY_MARKS.filter(m => markDone(s, m.key));
+      marks = done.length ? '<div class="cal-marks">' +
+        done.map(m =>
+          '<span class="cal-sq" style="background:#' + escapeAttr(markColor(m.key)) +
+            ';border-color:#' + escapeAttr(markColor(m.key)) + ';"></span>').join('') +
+        '</div>' : '';
     }
 
 
@@ -2421,7 +3120,7 @@ function renderCalendar(){
        first: a deadline falls on a day, an errand was put there. Both sit in
        the one two-line box, so the deadlines take whatever room the errands
        leave and simply do not appear when there is none. */
-    const join = arr => escapeHtml(arr.map(stripMd).join(' / '));
+    const join = arr => withFaces(escapeHtml(arr.map(stripMd).join(' / ')));
     const dues = duesOn(code);
     let sched = '';
     if(s.sched.length || dues.length){
@@ -2433,12 +3132,20 @@ function renderCalendar(){
     }
     if(s.chal.length) sched += '<span class="cal-sched chal">' + join(s.chal) + '</span>';
     const written = s.diary.length ? '<span class="cal-dot"></span>' : '';
+    const hol = holiOf(code);
 
     html += '<button class="cal-cell' + (weekend ? ' weekend' : '') +
               (code === today ? ' today' : '') +
-              (code === shownDay() && code !== today ? ' picked' : '') + '"' +
+              (code === shownDay() ? ' picked' : '') + '"' +
               ' onclick="pickDay(\'' + code + '\')">' +
-              '<span class="cal-daynum">' + day + '</span>' +
+              /* The figure itself carries it: red is a day Japan is off, and
+                 the small square beside it a day Korea keeps. A name will not
+                 fit in a cell 52px wide, and the box below gives it. */
+              '<span class="cal-head">' +
+                '<span class="cal-daynum' + (hol.jp ? ' hol-jp' : '') + '">' +
+                  day + '</span>' +
+                (hol.kr ? '<i class="cal-kr"></i>' : '') +
+              '</span>' +
               sched + marks + written +
             '</button>';
 
@@ -2481,23 +3188,83 @@ const DAY_LISTS = {
    blank left empty is a day it did not happen. */
 function checksHtml(code){
   const s = sharedOf(code);
-  return '<div class="hw-group mark-group">' +
-    DAY_MARKS.map(m =>
-      '<div class="mark-row">' +
-        '<span class="mark-label">' + m.label + '</span>' +
-        '<span class="mark-colon">:</span>' +
-        '<input type="text" class="mark-input" value="' + escapeAttr(s[m.key]) + '"' +
-          ' onchange="setMark(\'' + code + '\',\'' + m.key + '\',this.value)"' +
-          ' aria-label="' + m.label + '">' +
-      '</div>').join('') +
+  /* The name sits in the blank rather than beside it, and goes as soon as
+     anything is written there. One column of boxes down the middle, which is
+     what the three of these and the three lists above and below them now
+     have in common. */
+  /* Three marks, as the three things they are: a session put out, something
+     taken in, a body moved. Grey until the day has one of them, and pressing
+     one opens the line where what it was gets written. */
+  /* Three lines, one a mark: the drawing at the left and what it was written
+     beside it. Each sits on its own line rather than in a row of columns, so
+     the writing has the width of the sheet rather than a third of it. */
+  return '<div class="mark-list">' +
+    DAY_MARKS.map(m => {
+      const args = '\'' + code + '\',\'' + m.key + '\'';
+      const on = markDone(s, m.key);
+      const said = markText(s, m.key);
+      const open = dayEditKey === code + '|mark|' + m.key;
+      const tint = on ? ' style="color:#' + escapeAttr(onPaper(markColor(m.key))) + ';"' : '';
+      /* The drawing is the switch: one press turns the day's activity on and
+         one more turns it off. What it was gets written underneath, and may
+         be left unwritten — it happened either way. */
+      return '<div class="mark-row">' +
+        '<button class="mark-ic' + (on ? ' on' : '') + '"' + tint +
+          ' onclick="markToggle(' + args + ')"' +
+          ' aria-label="' + escapeAttr(m.label) + '">' +
+          '<span style="-webkit-mask-image:url(' + m.icon + ');mask-image:url(' + m.icon + ');"></span>' +
+        '</button>' +
+        (!on ? ''
+          : (open || !said
+              ? '<input type="text" class="mark-input" value="' + escapeAttr(said) + '"' +
+                  ' placeholder="' + escapeAttr(m.label) + '"' +
+                  ' onkeydown="markKey(event,' + args + ')"' +
+                  ' onblur="markCommit(this,' + args + ')"' +
+                  ' aria-label="' + m.label + '">'
+              : '<button class="mark-text" onclick="markStartEdit(' + args + ')">' +
+                  mdToHtml(said) + '</button>')) +
+      '</div>';
+    }).join('') +
   '</div>';
 }
 
-async function setMark(code, key, value){
+function markStartEdit(code, key){
+  dayEditKey = code + '|mark|' + key;
+  redrawDay(code);
+  focusMark();
+}
+
+function focusMark(){
+  const box = document.querySelector('#todayBox .mark-row .mark-input');
+  if(box){ box.focus(); box.select(); }
+}
+
+/* One press is the whole of it. Pressing a lit one again turns the day's
+   activity off, and whatever was written with it goes too — it is one short
+   line, and leaving it on a day that did not happen would be worse. */
+async function markToggle(code, key){
   const s = sharedOf(code);
-  s[key] = String(value || '').trim();
+  s[key] = markDone(s, key) ? '' : MARK_BARE;
   shared[code] = s;
-  renderCalendar();            // the grid's marks follow, the box is untouched
+  dayEditKey = markDone(s, key) ? code + '|mark|' + key : null;
+  redrawDay(code);
+  focusMark();
+  saveShared().catch(() => {});
+}
+
+function markKey(ev, code, key){
+  if(ev.key === 'Enter'){ ev.preventDefault(); ev.target.blur(); return; }
+  if(ev.key === 'Escape'){ ev.preventDefault(); dayEditKey = null; redrawDay(code); }
+}
+
+async function markCommit(el, code, key){
+  const s = sharedOf(code);
+  /* Left empty, the mark stays on and simply says nothing. Turning it off is
+     the drawing's job, not the blank's. */
+  s[key] = String(el.value || '').trim() || MARK_BARE;
+  shared[code] = s;
+  dayEditKey = null;
+  redrawDay(code);
   saveShared().catch(() => {});
 }
 
@@ -2541,12 +3308,32 @@ function dayListHtml(code, field, tail){
        the deadlines under the errands — stands here, inside the group and
        above its +, or the + reads as belonging to whatever comes next. */
     (tail || '') +
-    /* Prose gets one + and then none: there is one piece of writing a day,
-       not a list of them. */
-    (prose && rows.length ? '' :
-      '<div class="hw-row"><button class="hw-add" aria-label="' + meta.label + ' 추가"' +
-        (red ? ' style="color:var(--rust);"' : '') +
-        ' onclick="addDayLine(\'' + code + '\',\'' + field + '\')">' + PLUS_SVG + '</button></div>') +
+    /* A blank box at the foot of every list, with the list's own name in it.
+       The + said "there is something to add here" only to someone who already
+       knew; an empty box says it to anyone, and it is where the writing was
+       going to happen anyway. Prose gets one until it has been written in,
+       and then none: there is one diary a day, not a list of them. */
+    /* An empty list is a box with its own name in it — that is the whole
+       invitation, and it is where the writing was going to happen anyway.
+       Once there is a line, the box has said what it was for and gives way
+       to the + that adds the next one. */
+    (rows.length
+      ? (prose ? ''
+        : '<div class="hw-row"><button class="hw-add" aria-label="' + meta.label + ' 추가"' +
+            (red ? ' style="color:var(--rust);"' : '') +
+            ' onclick="addDayLine(\'' + code + '\',\'' + field + '\')">' + PLUS_SVG +
+          '</button></div>')
+      : '<div class="todo-row">' + (prose
+          ? '<textarea class="todo-edit-input prose new" rows="2"' +
+              ' placeholder="' + escapeAttr(meta.label) + '"' +
+              ' onblur="addDayLineFrom(this,\'' + code + '\',\'' + field + '\')"' +
+              ' aria-label="' + meta.label + '"></textarea>'
+          : '<input type="text" class="todo-edit-input new' + (red ? ' red' : '') + '"' +
+              ' placeholder="' + escapeAttr(meta.label) + '"' +
+              ' onkeydown="newLineKey(event,\'' + code + '\',\'' + field + '\')"' +
+              ' onblur="addDayLineFrom(this,\'' + code + '\',\'' + field + '\')"' +
+              ' aria-label="' + meta.label + '">') +
+        '</div>') +
   '</div>';
 }
 
@@ -2557,6 +3344,28 @@ function redrawDay(code){ renderCalPane(); }
 function focusDayEdit(){
   const box = document.querySelector('#todayBox .todo-edit-input');
   if(box){ box.focus(); box.select(); }
+}
+
+/* Enter commits and leaves the box ready for the next one, which is how a
+   list gets written without reaching for anything. */
+function newLineKey(ev, code, field){
+  if(ev.key === 'Enter'){ ev.preventDefault(); addDayLineFrom(ev.target, code, field); }
+}
+
+async function addDayLineFrom(el, code, field){
+  const t = String(el.value || '').replace(/\s+$/, '');
+  if(!t) return;                      // left empty, nothing is added
+  el.value = '';
+  const s = sharedOf(code);
+  if(field === 'diary') s.diary = trimTextLines(t);
+  else s[field].push(t);
+  shared[code] = s;
+  dayEditKey = null;
+  redrawDay(code);
+  /* Back into the blank, so a second line can follow the first. */
+  const box = document.querySelector('#todayBox .todo-edit-input.new');
+  if(box) box.focus();
+  saveShared().catch(() => {});
 }
 
 async function addDayLine(code, field){
@@ -2596,8 +3405,10 @@ async function dayLineCommit(el, code, field, idx){
   const t = String(el.value || '').trim();
   if(field === 'diary'){
     /* Prose: the whole of it is one entry, kept as the lines it was written
-       in so the text form stays line by line. */
-    s.diary = t ? t.split('\n').map(x => x.trim()).filter(Boolean) : [];
+       in — blank ones included — so the text form stays line by line and the
+       spacing someone put there survives being gone back over. It did not:
+       every empty line was dropped on the way in. */
+    s.diary = trimTextLines(el.value);
   } else if(t) s[field][idx] = t;
   else s[field].splice(idx, 1);     // emptied out, the line goes with it
   shared[code] = s;
@@ -2643,7 +3454,8 @@ function parseTalkText(text){
 function talkTitle(key){
   const a = dateFromCode(key);
   const b = new Date(a.getFullYear(), a.getMonth(), a.getDate() + 6);
-  return (a.getMonth()+1) + '. ' + a.getDate() + ' – ' + (b.getMonth()+1) + '. ' + b.getDate();
+  return MONTHS[a.getMonth()] + ' ' + a.getDate() + ' – ' +
+    (a.getMonth() === b.getMonth() ? '' : MONTHS[b.getMonth()] + ' ') + b.getDate();
 }
 
 let talkKey = null;
@@ -2668,6 +3480,7 @@ function renderTalk(){
   document.getElementById('talkBox').innerHTML =
     '<button class="modal-close" onclick="hideTalk()" aria-label="Close">✕</button>' +
     '<p class="modal-title">쀼톡 &middot; ' + talkTitle(talkKey) + '</p>' +
+    weekTallyHtml(talkKey) + weekCashHtml(talkKey) +
     (talkEditing
       ? '<textarea id="talkText" rows="14" spellcheck="false"' +
           ' style="font-size:var(--fs-label);">' +
@@ -2724,7 +3537,7 @@ async function deleteTalk(el){
    back the same way: whatever the text names is replaced, whatever it leaves
    out is left alone.
    ----------------------------------------------------------------------- */
-let dataKinds = {review: true, talk: true, day: true};
+let dataKinds = {review: true, talk: true, day: true, cash: true, holi: true};
 
 function toggleKind(el, key){
   dataKinds[key] = !dataKinds[key];
@@ -2781,26 +3594,36 @@ async function applyDataText(el){
 }
 
 function renderOptions(){
-  document.getElementById('nameA').value = people.a || '';
-  document.getElementById('nameB').value = people.b || '';
-  document.getElementById('meRow').innerHTML = WHO.map(who =>
-    '<button class="opt-btn' + (me === who ? ' selected' : '') + '"' +
-    ' onclick="setMe(\'' + who + '\')">' + escapeHtml(people[who]) + '</button>').join('');
+  /* The two of them, by their faces. Dimmed is the other one's phone. */
+  document.getElementById('meRow').innerHTML = WHO.map((who, i) =>
+    '<button class="who-pick' + (me === who ? ' on' : '') + '"' +
+    ' onclick="setMe(\'' + who + '\')" aria-label="' + escapeAttr(HW_WHO[i]) + '">' +
+    '<img src="' + FACES[HW_WHO[i]] + '" alt="' + escapeAttr(HW_WHO[i]) + '">' +
+    '</button>').join('');
   document.getElementById('syncIdInput').value = getSyncId();
   renderColorRows();
   renderDataText();
 }
 
+
 /* Changing one is instant — there is nothing to confirm about a colour, and
    seeing it is the only way to judge it. */
 function renderColorRows(){
+  /* A mark's row is named by its own drawing; a note's row by its name,
+     since a note has no drawing. */
+  const byKey = {};
+  DAY_MARKS.forEach(m => { byKey[{out:'OutP', inp:'InP', ex:'Ex.'}[m.key]] = m.icon; });
+
   document.getElementById('colorRows').innerHTML = COLOR_SLOTS.map(s =>
     '<div class="color-line">' +
       '<input type="color" value="#' + escapeAttr(colorSlot(s.key)) + '"' +
         ' aria-label="' + escapeAttr(s.label) + '"' +
         ' oninput="setColorSlot(' + JSON.stringify(s.key).replace(/"/g, '&quot;') +
         ', this.value)">' +
-      '<span>' + escapeHtml(s.label) + '</span>' +
+      (byKey[s.key]
+        ? '<span class="color-ic" style="-webkit-mask-image:url(' + byKey[s.key] +
+          ');mask-image:url(' + byKey[s.key] + ');"></span>'
+        : '<span>' + escapeHtml(s.label) + '</span>') +
     '</div>').join('');
 }
 
@@ -2818,13 +3641,6 @@ async function resetColors(el){
   renderAll();
   renderDataText();
   saveColors().catch(() => {});
-}
-
-async function saveNames(){
-  people = {a: document.getElementById('nameA').value.trim() || '령',
-            b: document.getElementById('nameB').value.trim() || '동'};
-  renderOptions(); renderAll();
-  savePeople().catch(() => {});
 }
 
 function setMe(who){
@@ -2962,6 +3778,18 @@ function applyParsed(p){
   const jobs = [];
   if(p.colors){ colors = Object.assign({}, colors, p.colors); jobs.push(saveColors()); }
   if(p.people){ people = Object.assign({}, people, p.people); jobs.push(savePeople()); }
+  if(Object.keys(p.cash).length){
+    Object.keys(p.cash).forEach(mm => {
+      Object.keys(p.cash[mm]).forEach(dd => { cash[mm + dd] = p.cash[mm][dd]; });
+    });
+    jobs.push(saveCash());
+  }
+  if(Object.keys(p.holi).length){
+    Object.keys(p.holi).forEach(mm => {
+      Object.keys(p.holi[mm]).forEach(dd => { holi[mm + dd] = p.holi[mm][dd]; });
+    });
+    jobs.push(saveHoli());
+  }
   if(Object.keys(p.board).length){
     Object.keys(p.board).forEach(mm => {
       /* A month written back keeps the colours its notes already had, the way
