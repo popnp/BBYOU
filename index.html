@@ -1047,7 +1047,7 @@ if('serviceWorker' in navigator){
 
   <div class="card-panel"><div class="panel-inner">
     <label class="field-label">데이터 수정</label>
-    <p class="hint" style="margin-bottom:var(--sp-3);">보고 싶은 것만 골라 꺼낸 다음, 글로 고쳐서 되돌립니다. 꺼낸 범위 안에 있는 것만 바뀌고 나머지는 그대로 있습니다.</p>
+    <p class="hint" style="margin-bottom:var(--sp-3);">보고 싶은 것만 골라 꺼낸 다음, 글로 고쳐서 넣습니다. 넣은 글 안에 있는 것만 바뀌고 나머지는 그대로 있습니다.</p>
     <div class="filter-row" id="dataKinds">
       <button class="chk on" onclick="toggleKind(this,'review')"><span class="chk-box"></span>쀼리뷰</button>
       <button class="chk on" onclick="toggleKind(this,'talk')"><span class="chk-box"></span>쀼톡</button>
@@ -1066,7 +1066,7 @@ if('serviceWorker' in navigator){
     <textarea id="dataText" rows="14" spellcheck="false"
       style="margin-top:var(--sp-3); font-size:var(--fs-label);"></textarea>
     <div class="actions" style="margin-top:var(--sp-3);">
-      <button class="btn btn-primary" onclick="applyDataText(this)">되돌리기</button>
+      <button class="btn btn-primary" onclick="applyDataText(this)">넣기</button>
       <button class="btn btn-ghost" onclick="copyDataText()">복사</button>
       <button class="btn btn-ghost" onclick="renderDataText()">다시 꺼내기</button>
     </div>
@@ -1092,7 +1092,7 @@ if('serviceWorker' in navigator){
     </div>
   </div></div>
 
-  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-26z</p>
+  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-26ab</p>
 </div></div>
 <script>
 /* =========================================================================
@@ -3015,8 +3015,6 @@ const shownDay = () => pickedDay || todayCode();
 function renderToday(){
   const code = shownDay();
   const d = dateFromCode(code);
-  const weekend = dowIndex(d) >= 5;
-
   /* The tasks falling due today are not written into the day — they are
      worked out from the board, so moving a deadline moves them with it. */
   /* Through the same marks everything else here goes through: the wording
@@ -3041,7 +3039,10 @@ function renderToday(){
           '</button>' +
           holiHtml(code) +
         '</div>' +
-        (weekend ? '' : checksHtml(code)) +
+        /* Every day, weekends included: a session or a swim on a Saturday
+           is still a session or a swim, and a day with no box to tick is a
+           day that cannot be recorded at all. */
+        checksHtml(code) +
       '</div>' +
       /* The day's own errands first and the deadlines under them: what was
          written for today outranks what merely falls due on it. Both inside
@@ -3096,19 +3097,15 @@ function renderCalendar(){
     const weekend = dowIndex(d) >= 5;
     const s = sharedOf(code);
 
-    /* No ticks on a weekend: there is nothing to record, so nothing is drawn
-       rather than two empty boxes that can never be filled. */
-    let marks = '';
-    if(!weekend){
-      /* Only what was written. Three empty outlines on every weekday of the
-         month said nothing and crowded out what did. */
-      const done = DAY_MARKS.filter(m => markDone(s, m.key));
-      marks = done.length ? '<div class="cal-marks">' +
-        done.map(m =>
-          '<span class="cal-sq" style="background:#' + escapeAttr(markColor(m.key)) +
-            ';border-color:#' + escapeAttr(markColor(m.key)) + ';"></span>').join('') +
-        '</div>' : '';
-    }
+    /* Only what was written, and on any day of the week. Three empty
+       outlines on every weekday said nothing and crowded out what did; and
+       leaving the weekend out said a Saturday swim had not happened. */
+    const done = DAY_MARKS.filter(m => markDone(s, m.key));
+    const marks = done.length ? '<div class="cal-marks">' +
+      done.map(m =>
+        '<span class="cal-sq" style="background:#' + escapeAttr(markColor(m.key)) +
+          ';border-color:#' + escapeAttr(markColor(m.key)) + ';"></span>').join('') +
+      '</div>' : '';
 
 
 
@@ -3181,8 +3178,7 @@ const DAY_LISTS = {
 };
 
 /* Output, then input or exercise. Drawn the same under the calendar and in
-   the popup, and never on a weekend — those days are off by agreement, so
-   there is nothing to tick and nothing is drawn. */
+   the popup, on every day of the week. */
 /* Three lines, each a name and a blank. Nothing is ticked: what is written
    in the blank is the record — "수영" one day and "조깅" the next — and a
    blank left empty is a day it did not happen. */
@@ -3580,7 +3576,7 @@ async function applyDataText(el){
   const p = parseAllText(document.getElementById('dataText').value);
   const c = restoreCounts(p);
   if(!restoreHasAny(p)){
-    document.getElementById('dataMsg').textContent = '되돌릴 내용이 없습니다.';
+    document.getElementById('dataMsg').textContent = '넣을 내용이 없습니다.';
     return;
   }
   if(!armed(el, '한 번 더 누르면 덮어씁니다')) return;
@@ -3589,7 +3585,8 @@ async function applyDataText(el){
   /* After the redraw, not before: renderDataText clears this line. */
   renderDataText();
   document.getElementById('dataMsg').textContent =
-    Object.keys(c).map(k => k + ' ' + c[k]).join(' · ') + ' 되돌렸습니다.';
+    Object.keys(c).filter(k => c[k]).map(k => k + ' ' + c[k]).join(' · ') +
+    ' 넣었습니다.';
   Promise.all(jobs).catch(() => {});
 }
 
@@ -3744,15 +3741,22 @@ function readLegacyBackup(text){
 
 function restoreCounts(p){
   if(!p) return null;
+  /* The money and the holidays are a month of days apiece, so they are
+     counted in days — "가계쀼 17" means seventeen days, not one month. */
+  const days = o => Object.keys(o || {})
+    .reduce((n, mm) => n + Object.keys(o[mm] || {}).length, 0);
   return {
     '쀼리뷰': Object.keys(p.board || {}).length,
     '쀼톡':   Object.keys(p.talks || {}).length,
-    '쀼일':   Object.keys(p.shared || {}).length
+    '쀼일':   Object.keys(p.shared || {}).length,
+    '가계쀼': days(p.cash),
+    '공휴일': days(p.holi)
   };
 }
 function restoreHasAny(p){
   const c = restoreCounts(p);
-  return !!(p && (p.colors || p.people || (c['쀼리뷰'] + c['쀼톡'] + c['쀼일']) > 0));
+  return !!(p && (p.colors || p.people ||
+    Object.keys(c).some(k => c[k] > 0)));
 }
 
 function showRestore(name, err){
@@ -3768,7 +3772,8 @@ function showRestore(name, err){
   }
   const c = restoreCounts(pendingRestore);
   msg.textContent = name + ' — ' +
-    Object.keys(c).map(k => k + ' ' + (c[k] || '그대로')).join(' · ');
+    (Object.keys(c).filter(k => c[k]).map(k => k + ' ' + c[k]).join(' · ')
+      || '읽을 내용 없음');
   go.style.display = '';
 }
 
