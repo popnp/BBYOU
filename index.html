@@ -883,7 +883,14 @@
        the week's dates stopped lining up with each other. */
     display:flex; flex-direction:column;
     align-items:flex-start; justify-content:flex-start;
-    min-height:93px;
+    /* The tallest a day can be, held by every day: today's 22px disc, three
+       lines of errands, a line of challenge and the foot row come to 111.6px
+       measured at 390px and at 1100px wide. A floor set at what a quiet day
+       needs made each week as deep as its busiest day, so the grid moved
+       under the eye from one month to the next and from one week to the one
+       below it. At the ceiling the month is a fixed grid and only the writing
+       in it changes. */
+    min-height:112px;
     border:none; border-radius:0;
     padding:4px 5px;
     background:transparent;
@@ -994,8 +1001,9 @@
   .cal-week{
     /* Lined up with the dates rather than floating in the middle of the row.
        At 62px the difference hardly showed; at 93px the mark sat low enough
-       to read as belonging to the week below it. */
-    min-height:93px; padding:4px 0 0;
+       to read as belonging to the week below it. Kept level with the dates:
+       the column shares their row and has to share their floor. */
+    min-height:112px; padding:4px 0 0;
     display:flex; align-items:flex-start; justify-content:center;
     background:transparent; border:none; border-radius:0;
     color:var(--text-muted); cursor:pointer;
@@ -1034,13 +1042,6 @@
     padding:var(--sp-4); text-align:left;
   }
   .talk-card + .talk-card{margin-top:var(--sp-3);}
-  /* The week's errands, under its marks. Plain ink: they are the week, not
-     a note about it. */
-  .tally-sched{
-    margin:var(--sp-3) 0 0;
-    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
-    line-height:1.5; color:var(--ink); overflow-wrap:anywhere;
-  }
   .talk-head{
     display:flex; align-items:center; gap:var(--sp-2);
     font-family:var(--font-ui); font-size:var(--fs-label); font-weight:500;
@@ -1326,7 +1327,7 @@ if('serviceWorker' in navigator){
     </div>
   </div></div>
 
-  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-27q</p>
+  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-27r</p>
 </div></div>
 <script>
 /* =========================================================================
@@ -1669,7 +1670,11 @@ const ME_KEY = 'bbyu-me';         // local only: which of the two this device is
 /* Both local only, and deliberately so: how big the notes are drawn and how
    they are laid out is what suits the screen in front of you. A phone and a
    desktop looking at the same month want different answers. */
-const Z_KEY   = 'bbyu-zoom';      // local only: how big the notes draw here
+/* One per board: the month's notes and the note page are read at different
+   distances — the month is a wall at arm's length, the note page a scratch
+   pad being written on — and a size set on one is not an opinion about the
+   other. The month keeps the original key so a size already set stays set. */
+const Z_KEY  = {board:'bbyu-zoom', note:'bbyu-zoom-note'};
 const LAY_KEY = 'bbyu-layout';    // local only: stacked by tier, or one run
 const WALL_KEY = 'bbyu-wall';     // local only: the board left up on a screen
 
@@ -1690,7 +1695,7 @@ let people = {a:'령', b:'동'};   // the wife, then the husband — the 숙제 
 let cash   = {};                  // {'261026': {live, hobby, shop}}
 let holi   = {};                  // {'261012': {jp:'스포츠의 날', kr:''}}
 let me = 'a';
-let piZoom = 1;                   // 1 is the note's own size
+let piZoom = {board:1, note:1};   // 1 is the note's own size, per board
 let boardFlow = false;            // false is a row per tier
 let wallpaper = false;            // everything but the thing itself, hidden
 const Z_MIN = 0.35, Z_MAX = 1.6;
@@ -2725,10 +2730,18 @@ function weekTallyHtml(key){
    to be used rather than things to be read across, and shrinking a 24px
    button is how a board stops being usable.
    ========================================================================= */
+/* Which of the two boards a size press belongs to. The month is the answer
+   from anywhere that is not the note page — the calendar has no size button
+   of its own, and a stray call from it must still land somewhere real. */
+const zPane = () => (pane === 'note' ? 'note' : 'board');
+const zClamp = z => Math.min(Z_MAX, Math.max(Z_MIN, z));
+
 function readView(){
   try{
-    const z = parseFloat(localStorage.getItem(Z_KEY));
-    if(isFinite(z)) piZoom = Math.min(Z_MAX, Math.max(Z_MIN, z));
+    Object.keys(Z_KEY).forEach(p => {
+      const z = parseFloat(localStorage.getItem(Z_KEY[p]));
+      if(isFinite(z)) piZoom[p] = zClamp(z);
+    });
     boardFlow = localStorage.getItem(LAY_KEY) === '1';
     wallpaper = localStorage.getItem(WALL_KEY) === '1';
   }catch(e){}
@@ -2741,13 +2754,21 @@ function readView(){
    class rather than by id — three pages cannot share one id between them,
    and pressing any copy puts every page into the same state. */
 function applyView(){
-  document.querySelectorAll('.board-stack').forEach(st => {
-    st.style.setProperty('--pi-z', piZoom.toFixed(3));
-    st.classList.toggle('flow', boardFlow);
+  /* Each board is written its own size, and the button inside that board's
+     page reads the same number back — the two pages are not one view. */
+  [['board', '#paneBoard', '#boardStack'],
+   ['note',  '#paneNote',  '#noteStack']].forEach(([p, sec, stack]) => {
+    const z = piZoom[p];
+    const st = document.querySelector(stack);
+    if(st) st.style.setProperty('--pi-z', z.toFixed(3));
+    const btn = document.querySelector(sec + ' .js-zoom');
+    if(btn){
+      btn.textContent = Math.round(z * 100) + '%';
+      btn.classList.toggle('on', Math.abs(z - 1) > 0.005);
+    }
   });
-  document.querySelectorAll('.js-zoom').forEach(el => {
-    el.textContent = Math.round(piZoom * 100) + '%';
-    el.classList.toggle('on', Math.abs(piZoom - 1) > 0.005);
+  document.querySelectorAll('.board-stack').forEach(st => {
+    st.classList.toggle('flow', boardFlow);
   });
   document.querySelectorAll('.js-layout').forEach(el => {
     el.innerHTML = boardFlow ? FLOW_SVG : STACK_SVG;
@@ -2782,9 +2803,10 @@ function toggleWall(){
 }
 
 function setZoom(z, keep){
-  piZoom = Math.min(Z_MAX, Math.max(Z_MIN, z));
+  const p = zPane();
+  piZoom[p] = zClamp(z);
   applyView();
-  if(keep){ try{ localStorage.setItem(Z_KEY, String(piZoom)); }catch(e){} }
+  if(keep){ try{ localStorage.setItem(Z_KEY[p], String(piZoom[p])); }catch(e){} }
 }
 
 /* Pressing the percentage steps down through the sizes and comes back round
@@ -2794,7 +2816,8 @@ function setZoom(z, keep){
    never a jump upward from wherever the board happens to be. */
 const Z_STEPS = [1, 0.75, 0.5];
 function resetZoom(){
-  const i = Z_STEPS.findIndex(z => z < piZoom - 0.005);
+  const now = piZoom[zPane()];
+  const i = Z_STEPS.findIndex(z => z < now - 0.005);
   setZoom(i === -1 ? Z_STEPS[0] : Z_STEPS[i], true);
 }
 
@@ -2815,14 +2838,14 @@ function toggleFlow(){
   const onBoard = el => !!(el && el.closest && el.closest('.board-stack'));
   document.addEventListener('touchstart', e => {
     if(e.touches.length !== 2 || !onBoard(e.target)){ d0 = 0; return; }
-    d0 = gap(e.touches); base = piZoom;
+    d0 = gap(e.touches); base = piZoom[zPane()];
   }, {passive:true});
   document.addEventListener('touchmove', e => {
     if(!d0 || e.touches.length !== 2) return;
     const d = gap(e.touches);
     if(d > 0) setZoom(base * d / d0, false);
   }, {passive:true});
-  const done = () => { if(d0){ d0 = 0; setZoom(piZoom, true); } };
+  const done = () => { if(d0){ d0 = 0; setZoom(piZoom[zPane()], true); } };
   document.addEventListener('touchend', done, {passive:true});
   document.addEventListener('touchcancel', done, {passive:true});
 })();
@@ -2955,17 +2978,6 @@ function weekHasAny(key){
   });
 }
 
-/* The week's errands, run together on one line. Not clipped: this is the
-   month being read back, and the point of reading it back is the detail. */
-function weekSchedHtml(key){
-  const out = [];
-  weekDays(key).forEach(code =>
-    sharedOf(code).sched.forEach(t => out.push(stripMd(t))));
-  return out.length
-    ? '<div class="tally-sched">' + withFaces(escapeHtml(out.join(' / '))) + '</div>'
-    : '';
-}
-
 /* The month's 쀼톡, under the board. The same thing the week column opens —
    the marks, the week's spending, and what was said — but read rather than
    pressed: the board is where the month is looked back on, and having to
@@ -2996,7 +3008,7 @@ function monthTalksHtml(mm){
         '<img class="talk-mark" src="' + TALK_ICON + '" alt="쀼톡">' +
         '<span>' + escapeHtml(talkTitle(k)) + '</span>' +
       '</button>' +
-      weekTallyHtml(k) + weekSchedHtml(k) + weekCashHtml(k) +
+      weekTallyHtml(k) + weekCashHtml(k) +
       TALK_SECTIONS.filter(s => t[s.key].length).map(s =>
         '<span class="talk-part">' +
           t[s.key].map(x => '<span>' + mdToHtml(x) + '</span>').join('<br>') +
