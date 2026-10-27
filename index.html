@@ -13,6 +13,18 @@
 <link href="https://api.fontshare.com/v2/css?f[]=switzer@300,400,500,600&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
 <style>
+  /* 어비 라이스체, from 눈누. One weight only, so the two rungs inside a note
+     are told apart by size alone from here on; nothing asks for a bold it
+     does not have, so no browser invents one. `swap` means the board is
+     readable in the fallback face while the file is still coming.
+     The address is copied exactly as 눈누 gave it, odd version string and
+     all — it is their path, not one to tidy. */
+  @font-face{
+    font-family:'AviDavinci';
+    src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_five@.2.0/UhBeeRice.woff') format('woff');
+    font-weight:normal;
+    font-display:swap;
+  }
   /* ======================================================================
      BBYU — the couple's board and month.
 
@@ -24,6 +36,12 @@
     --font-ui:'Switzer','Pretendard Variable','Pretendard',
               'Helvetica Neue',Helvetica,Arial,
               'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+    /* The notes alone are written by hand. Everything else on the board —
+       the homework, the + buttons, the month, Options — stays in the face
+       the other two apps use, so the handwriting reads as what was written
+       rather than as the app's voice. Falls back to the UI stack, so a board
+       opened before the file arrives is still a board. */
+    --font-pi:'AviDavinci',var(--font-ui);
     /* This app is dark. The two border weights DESIGN names are roles, not
        values — Layer A is still "the emphatic one", it is simply white here
        instead of black. Everything below reads these names rather than a
@@ -107,7 +125,6 @@
     color:var(--text-muted); cursor:pointer;
   }
   .pane-btn.on{color:var(--ink); font-weight:500;}
-  .month-row .spacer{flex:1;}
   .month-nav{display:flex; align-items:center; gap:var(--sp-3);}
 
   /* Which of the two screens this is, and the way to the other one on a
@@ -134,9 +151,13 @@
 
   /* ---- the month stepper, shared by both panes ---- */
   .month-row{
-    display:flex; align-items:center; gap:var(--sp-3);
+    display:grid; grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items:center; gap:var(--sp-3);
     margin-bottom:var(--gap-block);
   }
+  .month-row .month-nav{justify-self:start;}
+  .month-row .pane-dots{justify-self:center;}
+  .month-row .pane-btn{justify-self:end;}
   .month-label{font-size:var(--fs-lead); font-weight:500;}
   .step-btn{
     width:24px; height:24px; padding:0;
@@ -205,7 +226,55 @@
      do, so it is set the way the to-do list in Time is set — a tick, a line of
      16px text, struck through when it is done and nothing else.
      ====================================================================== */
-  .board-stack{display:flex; flex-direction:column; gap:var(--sp-3);}
+  .board-stack{
+    display:flex; flex-direction:column; gap:var(--sp-3);
+    /* How big the notes draw on this device — nothing else on the board
+       moves with it. Set from the fingers, read by the rules below. */
+    --pi-z:1;
+    /* Up and down still scrolls; two fingers do not zoom the page, because
+       the board wants that gesture for itself. */
+    touch-action:pan-y;
+  }
+  /* The other way of laying the board out: one wrapping run of notes rather
+     than a row for each tier. The three kinds of row give up their own boxes
+     — `display:contents` hands their children straight to the board — so a
+     쀼훈 and an 아젠다 can share a line, and each tier's + stays where it was,
+     directly after the notes it adds to. */
+  .board-stack.flow{
+    flex-direction:row; flex-wrap:wrap; justify-content:center;
+    align-items:flex-start;
+  }
+  .board-stack.flow > .pi-row{display:contents;}
+  /* In one run the + would otherwise stand between the last note of a tier
+     and the first of the next, putting 48px where every other pair of notes
+     has 12. Ordered last, every + gathers on the final line instead and the
+     paper keeps one rhythm throughout; the colours are what say which tier
+     each one adds to. */
+  .board-stack.flow .add-btn{order:1;}
+  /* The homework and the way into the text still own a line each, and both
+     come after the row of +: ordering the + last put them below the homework
+     and below the text link, which is nowhere near the paper they add to. */
+  .board-stack.flow > .hw-block,
+  .board-stack.flow > .talk-list,
+  .board-stack.flow > .board-foot{flex:0 0 100%; order:2;}
+
+  /* The two controls over the board, top left. */
+  .board-tools{
+    display:flex; align-items:center; gap:var(--sp-2);
+    margin-bottom:var(--sp-3);
+  }
+  .tool-btn{
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
+    min-height:26px; padding:2px var(--sp-2);
+    display:flex; align-items:center; justify-content:center;
+    background:none; color:var(--text-muted);
+    border:1px solid var(--line-b); border-radius:0;
+    cursor:pointer;
+  }
+  /* Lit when it is doing something: the board is laid out the other way, or
+     the notes are not at their own size. */
+  .tool-btn.on{color:var(--ink); border-color:var(--ink);}
+  .tool-btn svg{display:block; width:16px; height:16px;}
   /* Notes of one tier stand side by side and drop to the next line when the
      row runs out, which is how they behave on a wall. Centred, so a single
      note is in the middle rather than stranded at the left. */
@@ -214,9 +283,23 @@
     align-items:flex-start;
     gap:var(--sp-3);
   }
-  /* The way to add one more note of the tier above. On the right, where every
-     other control in these apps that acts on the block above it sits. */
-  .add-row{display:flex; justify-content:flex-end;}
+  /* Level with the paper beside it rather than at the top of the line, which
+     is where a 24px button lands next to a 288px note. Only the + of a tier
+     with nothing in it stands beside anything now; the rest are on paper. */
+  .pi-row > .add-btn, .board-stack.flow > .add-btn{align-self:center;}
+  /* The + of the last note of its kind, in that note's bottom left corner.
+     Fixed at 24px like every other + in these apps, so it does not shrink
+     with the board — a control is for pressing, not for reading across. */
+  /* Taken out of the flow entirely — no padding is kept for it — so what is
+     written on the note stays centred on the whole square rather than on
+     whatever the button left over. */
+  /* Two names deep: `.add-btn` carries the page's ink and is declared below
+     this, so a single name here lost the cascade and the + came out white on
+     the paper. */
+  .pi .pi-add{
+    position:absolute; right:var(--sp-2); bottom:var(--sp-2);
+    color:#111;
+  }
   /* The same mark, in the same 24px box, as every + in the other two apps.
      No wording: nothing in this family of apps spells out "add". */
   .add-btn, .hw-add{
@@ -237,18 +320,22 @@
     /* A note is a set size, not whatever the screen is wide. One name, so
        the whole board resizes from here. */
     --link-blue:#2519FF;
-    width:var(--pi-w); flex:0 0 auto; text-align:center;
+    width:calc(var(--pi-w) * var(--pi-z)); max-width:100%;
+    flex:0 0 auto; text-align:center;
     /* Square at the smallest: the same measure down as across. A note with
        more on it grows downward from there, never narrower or wider. */
-    min-height:var(--pi-w);
+    min-height:calc(var(--pi-w) * var(--pi-z));
     /* A column so that what is written sits in the middle of the paper rather
        than at the top of it, with the slack falling evenly above and below. */
     display:flex; flex-direction:column; justify-content:center;
+    position:relative;
     border:none; border-radius:0;
-    padding:var(--sp-4);
+    /* The padding goes with the paper, or a note at half size reads as a
+       full-size margin with a few words trapped in the middle of it. */
+    padding:calc(var(--sp-4) * var(--pi-z));
     background:var(--postit);
     cursor:pointer;
-    font-family:var(--font-ui);
+    font-family:var(--font-pi);
     /* Dark lettering even though the page is black: a note's paper is light,
        so what is written on it follows the note, not the page. */
     color:#111;
@@ -258,16 +345,26 @@
      as sizes rather than as colours that happen to differ. */
   .pi-big{font-weight:500; line-height:1.2; display:block; white-space:pre-wrap; word-break:break-word;}
   .pi-small{font-weight:300; line-height:1.3; display:block; white-space:pre-wrap; word-break:break-word;}
-  .pi-big + .pi-big, .pi-big + .pi-small, .pi-small + .pi-big, .pi-small + .pi-small{margin-top:var(--sp-2);}
+  .pi-big + .pi-big, .pi-big + .pi-small, .pi-small + .pi-big, .pi-small + .pi-small{
+    margin-top:calc(var(--sp-2) * var(--pi-z));
+  }
   /* A line left blank on purpose: the space between two things said apart. */
-  .pi-gap{display:block; height:var(--sp-5);}
+  .pi-gap{display:block; height:calc(var(--sp-5) * var(--pi-z));}
 
   /* An open note: the paper stays, the words become the text they are made
      of, and the tools sit under them on the same paper. */
-  .pi.editing{cursor:default;}
+  /* A note open for writing comes back to its own size whatever the board is
+     set to: the scale is for reading the wall, and nobody should have to type
+     into a sheet at half size. */
+  .pi.editing{
+    cursor:default;
+    width:var(--pi-w); min-height:var(--pi-w); padding:var(--sp-4);
+  }
   .pi-edit{
     width:100%; flex:1 1 auto; min-height:120px;
-    font-family:var(--font-ui); font-size:var(--fs-body); font-weight:400;
+    /* Written in the face it will be read in: a note typed in one letterform
+       and shown in another is a note that has to be opened twice. */
+    font-family:var(--font-pi); font-size:var(--fs-body); font-weight:400;
     line-height:1.3; text-align:center;
     color:#111; background:rgba(255,255,255,0.55);
     border:0.5px solid rgba(0,0,0,0.35); border-radius:0;
@@ -323,17 +420,14 @@
   }
   .pi-tool.done{font-weight:500;}
 
-  .pi-1 .pi-big{font-size:var(--fs-display);}
-  .pi-1 .pi-small{font-size:var(--fs-body);}
-  .pi-2 .pi-big{font-size:var(--fs-lead);}
-  .pi-2 .pi-small{font-size:var(--fs-label);}
+  /* The lettering moves by exactly the same share as the paper, so a note
+     shrinks as a picture of itself rather than becoming a small sheet with
+     full-size writing on it. */
+  .pi-1 .pi-big{font-size:calc(var(--fs-display) * var(--pi-z));}
+  .pi-1 .pi-small{font-size:calc(var(--fs-body) * var(--pi-z));}
+  .pi-2 .pi-big{font-size:calc(var(--fs-lead) * var(--pi-z));}
+  .pi-2 .pi-small{font-size:calc(var(--fs-label) * var(--pi-z));}
 
-  /* A category with nothing in it: one + in the middle, in that category's
-     own paper colour, and no wording — the colour says which it is. */
-  .start-row{
-    display:flex; align-items:center; justify-content:center;
-    padding:var(--sp-5) 0;
-  }
   /* The way into the month as text, bottom left. */
   .board-foot{margin-top:var(--sp-6); text-align:right;}
 
@@ -430,6 +524,9 @@
   }
   /* Only the planning sheet reads up the middle; the rest read from the left. */
   .tb-plan .todo-edit-input{max-width:300px; margin:0 auto; text-align:center;}
+  /* The blank beside a drawing stands as tall as the drawing, so the two
+     read as one row rather than one overhanging the other. */
+  .tb-day .mark-row .mark-input{height:30px;}
   /* A challenge is red in its blank as well as in its wording. */
   .today-list .todo-edit-input.red,
   .today-list .todo-edit-input.red::placeholder{color:var(--rust);}
@@ -452,6 +549,22 @@
     font-size:var(--fs-label); line-height:26px;
     padding:0 var(--sp-1);
   }
+  /* No frame anywhere on the day: what is being written sits on the paper
+     the same way it will sit there once it is written, so opening a line
+     changes the words and nothing around them. */
+  .today-list .todo-edit-input,
+  .today-list .mark-input{border:none; padding-left:0; padding-right:0;}
+  /* The name of an empty list and the + that starts it, as one press. */
+  .empty-add{
+    display:flex; align-items:center; gap:var(--sp-2);
+    font-family:var(--font-ui); font-size:var(--fs-body); font-weight:400;
+    line-height:1.35; color:var(--text-muted);
+    background:none; border:none; border-radius:0; padding:0;
+    cursor:pointer;
+  }
+  .empty-add svg{width:16px; height:16px; fill:currentColor; display:block;}
+  .empty-add:hover{opacity:0.6;}
+
   .todo-edit-input.prose{line-height:1.45; padding:var(--sp-1);}
 
   /* ---- the week's count, at the head of the review ---- */
@@ -527,7 +640,7 @@
      a gap between each, and the sheet's own padding top and bottom. */
   .tb-plan{
     min-height:calc(var(--fs-lead) + var(--fs-label) * 1.2 + var(--sp-4)
-                    + 30px * 3 + var(--sp-2) * 2 + var(--sp-4) * 2);
+                    + 30px * 3 + var(--sp-4) * 2 + var(--sp-4) * 2);
   }
   /* Left, with the day's figures in it: three sums and the total at
      line-height 1.5, the rule above the total with its space either side,
@@ -549,12 +662,13 @@
     text-align:left; min-width:0;
   }
   /* What is planned reads up the middle. */
-  .tb-plan{text-align:center; padding:var(--sp-5) var(--sp-3);}
+  .tb-plan{text-align:center;}
   .tb-plan .today-line,
   .tb-plan .todo-row,
   .tb-plan .hw-row{justify-content:center;}
   .tb-diary .todo-row,
   .tb-diary .hw-row{justify-content:flex-start;}
+  .tb-diary .todo-row.empty-row{justify-content:center;}
   /* Not flex:1 here: stretched to the full width, a line would sit left of
      centre with the challenge disc pushed out to the edge. Sized to its own
      wording, the disc and the words centre together. */
@@ -612,7 +726,7 @@
      Three columns alongside each other would have left each blank a third of
      a 132px sheet on a phone — about four characters. Down the page, the
      writing gets everything the drawing does not take. */
-  .mark-list{display:flex; flex-direction:column; gap:var(--sp-2); width:100%;}
+  .mark-list{display:flex; flex-direction:column; gap:var(--sp-4); width:100%;}
   .mark-row{display:flex; align-items:center; gap:var(--sp-2); min-width:0;}
   .mark-ic{
     display:block; padding:0; border:none; background:none; cursor:pointer;
@@ -678,15 +792,10 @@
     white-space:pre-wrap; line-height:1.5;
   }
   .diary-group .todo-edit-input.prose{line-height:1.5; text-align:left;}
-  /* The word standing in the empty box is a label, like the two above it on
-     the other sheet, so it sits up the middle. What gets typed over it is
-     prose and stays at the left, which is why this is set on the placeholder
-     and not on the box. */
-  .tb-diary .todo-edit-input::placeholder{text-align:center;}
   /* Nothing names the three lists any more, so the space between them is
      what parts them — it has to be plainly bigger than the space between two
      lines of the same list, or they read as one. */
-  .today-list .hw-group + .hw-group{margin-top:var(--sp-5);}
+  .today-list .hw-group + .hw-group{margin-top:var(--sp-4);}
   /* The + belongs to the list above it, so it sits close to that list and
      the gap below it is the one that parts the groups. It was being pulled up
      by a negative margin into a row sized for a line of text, which left it
@@ -846,6 +955,29 @@
     overflow-wrap:anywhere;
   }
   .talk-part + .talk-part{margin-top:var(--sp-5);}
+  /* The week's note, on the board rather than over it. White paper and the
+     four names declared again inside, the way the popup and the day sheets
+     do it, so every rule within simply follows. */
+  .talk-list{margin-top:var(--sp-5);}
+  .talk-card{
+    --paper:#FFFFFF;
+    --ink:#111111;
+    --text-muted:#6B6B6B;
+    --line-b:#9A9A9A;
+    --link-blue:#2519FF;
+    background:var(--paper); color:var(--ink);
+    padding:var(--sp-4); text-align:left;
+  }
+  .talk-card + .talk-card{margin-top:var(--sp-3);}
+  .talk-head{
+    display:flex; align-items:center; gap:var(--sp-2);
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:500;
+    color:var(--text-muted);
+    background:none; border:none; border-radius:0; padding:0;
+    margin:0 0 var(--sp-3); cursor:pointer; text-align:left;
+  }
+  .talk-head .talk-mark{width:16px; height:16px; display:block;}
+
 
   .cal-week .mark{
     writing-mode:vertical-rl;
@@ -960,7 +1092,6 @@ if('serviceWorker' in navigator){
       <svg class="chev" width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5 L18.5 12 L7 20.5" fill="none" stroke="currentColor" stroke-width="4.2" stroke-linecap="square" stroke-linejoin="miter"/></svg>
     </button>
   </span>
-  <span class="spacer"></span>
   <span class="pane-dots" id="paneDots">
     <button onclick="setPane('board')" aria-label="Board"><i></i></button>
     <button onclick="setPane('cal')" aria-label="Month"><i></i></button>
@@ -970,6 +1101,12 @@ if('serviceWorker' in navigator){
 
 <!-- ================= PANE 1 — the board ================= -->
 <section id="paneBoard">
+  <!-- Top left, over the notes: how the board is laid out, and how big it is
+       drawn. Both are this device's own view of the month, not the month. -->
+  <div class="board-tools">
+    <button class="tool-btn" id="layoutBtn" onclick="toggleFlow()" aria-label="배치"></button>
+    <button class="tool-btn" id="zoomBtn" onclick="resetZoom()" aria-label="포스트잇 크기">100%</button>
+  </div>
   <div class="board-stack" id="boardStack"></div>
 </section>
 
@@ -1100,7 +1237,7 @@ if('serviceWorker' in navigator){
     </div>
   </div></div>
 
-  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-26ad</p>
+  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-27k</p>
 </div></div>
 <script>
 /* =========================================================================
@@ -1393,6 +1530,27 @@ function cloudStatus(ok){
   if(el) el.style.display = ok ? 'none' : 'block';
 }
 
+/* Two drawings for the one button: the board as it is now. Rows of unequal
+   length stacked one per tier, or a run of notes that wraps where the screen
+   ends. The button shows the layout in force, not the one it would switch to
+   — a control that shows its own state is read once, a control that shows
+   its effect is read twice. */
+/* Both drawn out of the one thing the board is made of — a square of paper.
+   Bars said "a list" where the board is squares; stacked squares say the
+   same arrangement in the board's own unit. */
+const STACK_SVG =
+  '<svg viewBox="0 0 16 16" aria-hidden="true">' +
+  '<rect x="6" y="0.5" width="4" height="4" fill="currentColor"/>' +
+  '<rect x="6" y="6" width="4" height="4" fill="currentColor"/>' +
+  '<rect x="6" y="11.5" width="4" height="4" fill="currentColor"/></svg>';
+const FLOW_SVG =
+  '<svg viewBox="0 0 16 16" aria-hidden="true">' +
+  '<rect x="0.5" y="3.25" width="4" height="4" fill="currentColor"/>' +
+  '<rect x="6" y="3.25" width="4" height="4" fill="currentColor"/>' +
+  '<rect x="11.5" y="3.25" width="4" height="4" fill="currentColor"/>' +
+  '<rect x="0.5" y="8.75" width="4" height="4" fill="currentColor"/>' +
+  '<rect x="6" y="8.75" width="4" height="4" fill="currentColor"/></svg>';
+
 /* ---- keys ------------------------------------------------------------- */
 const K_BOARD  = 'bbyu-board';    // shared: the month's notes
 const K_SHARED = 'bbyu-shared';   // the day: errands, ticks, diary, challenges
@@ -1406,6 +1564,11 @@ const K_HOLI   = 'bbyu-holi';     // shared: the days off, by country
    day already ticked is not lost. */
 const kDaily = who => 'bbyu-daily-' + who;
 const ME_KEY = 'bbyu-me';         // local only: which of the two this device is
+/* Both local only, and deliberately so: how big the notes are drawn and how
+   they are laid out is what suits the screen in front of you. A phone and a
+   desktop looking at the same month want different answers. */
+const Z_KEY   = 'bbyu-zoom';      // local only: how big the notes draw here
+const LAY_KEY = 'bbyu-layout';    // local only: stacked by tier, or one run
 
 /* ---- state ------------------------------------------------------------
    A month is a list of notes in the order they were written. A note is a name
@@ -1424,6 +1587,9 @@ let people = {a:'령', b:'동'};   // the wife, then the husband — the 숙제 
 let cash   = {};                  // {'261026': {live, hobby, shop}}
 let holi   = {};                  // {'261012': {jp:'스포츠의 날', kr:''}}
 let me = 'a';
+let piZoom = 1;                   // 1 is the note's own size
+let boardFlow = false;            // false is a row per tier
+const Z_MIN = 0.35, Z_MAX = 1.6;
 let viewMonth = '';               // YYMM being looked at
 let pane = 'board';
 
@@ -1493,6 +1659,7 @@ async function loadAll(){
   migrateDays(parse(da, {}), parse(db, {}));
   try{ me = localStorage.getItem(ME_KEY) || 'a'; }catch(e){ me = 'a'; }
   if(WHO.indexOf(me) === -1) me = 'a';
+  readView();
 }
 
 /* The day used to be two records, one per person, each holding a morning tick
@@ -1619,13 +1786,27 @@ function toggleOptions(){
   const TRIGGER = 50;
   let x0 = 0, y0 = 0, live = false;
   const view = () => document.querySelector('.wrap');
+  const typing = t => !!(t && t.closest && t.closest('input, textarea, .modal-overlay'));
+  /* Dragging to choose words is a sideways drag too, and on a tablet it is
+     the commonest one there is: a long press, then a pull along the line.
+     While anything is selected the push is off — the finger is working on
+     the text, not on the screen behind it. */
+  const picking = () => {
+    const s = document.getSelection && document.getSelection();
+    return !!(s && !s.isCollapsed);
+  };
   document.addEventListener('touchstart', e => {
+    /* Two fingers is a pinch on the board, not a push sideways. Read off
+       touches[0] alone, a spreading pinch looked exactly like a swipe and
+       changed the screen out from under it. */
+    if(e.touches.length > 1 || picking() || typing(e.target)){ live = false; return; }
     const v = view(), t = e.touches[0];
     live = !!(v && t && v.contains(e.target));
     if(live){ x0 = t.clientX; y0 = t.clientY; }
   }, {passive:true});
   document.addEventListener('touchmove', e => {
     if(!live) return;
+    if(e.touches.length > 1 || picking()){ live = false; return; }
     const t = e.touches[0];
     if(!t) return;
     const dx = t.clientX - x0, dy = t.clientY - y0;
@@ -1644,15 +1825,15 @@ function toggleOptions(){
      Only a mouse: a finger already fires the handlers above, and taking the
      pointer events too would switch twice on one swipe. */
   let mx = 0, my = 0, mlive = false;
-  const typing = t => !!(t && (t.closest('input, textarea, .modal-overlay')));
   document.addEventListener('pointerdown', e => {
     if(e.pointerType !== 'mouse' || e.button !== 0) return;
     const v = view();
-    mlive = !!(v && v.contains(e.target)) && !typing(e.target);
+    mlive = !!(v && v.contains(e.target)) && !typing(e.target) && !picking();
     if(mlive){ mx = e.clientX; my = e.clientY; }
   });
   document.addEventListener('pointermove', e => {
     if(!mlive || e.pointerType !== 'mouse') return;
+    if(picking()){ mlive = false; return; }
     const dx = e.clientX - mx, dy = e.clientY - my;
     if(Math.abs(dy) > Math.abs(dx)){ mlive = false; return; }
     if(Math.abs(dx) > TRIGGER){
@@ -1673,7 +1854,9 @@ function stepMonth(delta){
 function renderMonthLabel(){
   const y = 2000 + parseInt(viewMonth.slice(0,2), 10);
   const m = parseInt(viewMonth.slice(2,4), 10);
-  document.getElementById('monthLabel').textContent = y + '. ' + m;
+  /* Two figures for the year: the month is read at a glance and the century
+     has never been in question. */
+  document.getElementById('monthLabel').textContent = String(y).slice(2) + '. ' + m;
 }
 
 /* =========================================================================
@@ -2226,10 +2409,20 @@ function sortedNotes(mm){
     const b = baseName(n.name);
     if(first[b] === undefined) first[b] = i;
   });
+  /* The named kinds come in the order TIER_ORDER sets, not the order they
+     happened to be written in: 기타 written before the creative agenda put
+     the grey notes above the green ones and left the board reading in the
+     order of its own history. A name nobody declared falls after them all,
+     and keeps first-written order among its own. */
+  const rank = name => {
+    const at = TIER_ORDER.indexOf(baseName(name));
+    return at === -1 ? TIER_ORDER.length : at;
+  };
   return ns.slice()
     .map((n, i) => ({n: n, i: i}))
     .sort((a, b) =>
       (tierOf(a.n.name) - tierOf(b.n.name)) ||
+      (rank(a.n.name) - rank(b.n.name)) ||
       (first[baseName(a.n.name)] - first[baseName(b.n.name)]) ||
       (a.i - b.i))
     .map(x => x.n);
@@ -2306,12 +2499,21 @@ function homeworkHtml(note){
 
 /* One note: what is written on it, or — while it is open — the text itself
    with its colour and a way to take it away. */
-function pinHtml(note){
+function pinHtml(note, addBase){
   const paper = colorOf(note);
   const bg = paper ? ' style="background:#' + escapeAttr(paper) + ';"' : '';
+  /* On the note's own paper the tier colour would be the paper colour, so
+     the + takes the note's ink instead. The press has to be stopped here or
+     it would carry on to the note underneath and open it for writing. */
+  const add = addBase
+    ? '<button class="add-btn pi-add" aria-label="추가"' +
+        ' onclick="event.stopPropagation();addNote(' +
+        JSON.stringify(addBase).replace(/"/g, '&quot;') + ')">' + PLUS_SVG + '</button>'
+    : '';
   if(noteEditId !== note.id){
-    return '<div class="pi pi-' + tierOf(note.name) + '" role="button" tabindex="0"' + bg +
-      ' onclick="openNote(\'' + note.id + '\')">' + noteBodyHtml(note) + '</div>';
+    return '<div class="pi pi-' + tierOf(note.name) +
+      '" role="button" tabindex="0"' + bg +
+      ' onclick="openNote(\'' + note.id + '\')">' + noteBodyHtml(note) + add + '</div>';
   }
   return '<div class="pi pi-' + tierOf(note.name) + ' editing"' + bg + '>' +
     '<textarea class="pi-edit" spellcheck="false"' +
@@ -2322,6 +2524,8 @@ function pinHtml(note){
     '<div class="pi-tools">' +
       '<input type="color" value="#' + escapeAttr(paper || 'EDEDED') + '"' +
         ' oninput="noteColorPick(this,\'' + note.id + '\')" aria-label="색">' +
+      (paper ? '<button class="pi-tool" onclick="noteColorReset(\'' + note.id + '\')"' +
+          ' aria-label="기본 색으로">기본</button>' : '') +
       '<button class="pi-tool" onclick="deleteNoteNow(this,\'' + note.id + '\')">삭제</button>' +
       '<button class="pi-tool done" onclick="closeNote()" aria-label="완료">✓</button>' +
     '</div>' +
@@ -2360,10 +2564,101 @@ function weekTallyHtml(key){
     (html ? '<div class="tally-row">' + html + '</div>' : '') + line + '</div>';
 }
 
+/* =========================================================================
+   How the board is looked at — its scale and its layout.
+
+   Neither is part of the month: they are this screen's view of it, so both
+   live in localStorage and neither goes near the sync code. The husband's
+   phone can hold the board at half size while this one has it at full.
+
+   The scale moves the paper and the lettering by the same share, so a note
+   at 60% is the same note seen from further away. What it does NOT move is
+   the homework, the + buttons or a note open for writing — those are things
+   to be used rather than things to be read across, and shrinking a 24px
+   button is how a board stops being usable.
+   ========================================================================= */
+function readView(){
+  try{
+    const z = parseFloat(localStorage.getItem(Z_KEY));
+    if(isFinite(z)) piZoom = Math.min(Z_MAX, Math.max(Z_MIN, z));
+    boardFlow = localStorage.getItem(LAY_KEY) === '1';
+  }catch(e){}
+}
+
+/* Written straight onto the board rather than redrawn: the fingers move this
+   many times a second, and rebuilding every note at each step would stutter.
+   The rules do the rest from the one number. */
+function applyView(){
+  const st = document.getElementById('boardStack');
+  if(st){
+    st.style.setProperty('--pi-z', piZoom.toFixed(3));
+    st.classList.toggle('flow', boardFlow);
+  }
+  const zb = document.getElementById('zoomBtn');
+  if(zb){
+    zb.textContent = Math.round(piZoom * 100) + '%';
+    zb.classList.toggle('on', Math.abs(piZoom - 1) > 0.005);
+  }
+  const lb = document.getElementById('layoutBtn');
+  if(lb){
+    lb.innerHTML = boardFlow ? FLOW_SVG : STACK_SVG;
+    lb.classList.toggle('on', boardFlow);
+  }
+}
+
+function setZoom(z, keep){
+  piZoom = Math.min(Z_MAX, Math.max(Z_MIN, z));
+  applyView();
+  if(keep){ try{ localStorage.setItem(Z_KEY, String(piZoom)); }catch(e){} }
+}
+
+/* Pressing the percentage steps down through the sizes and comes back round
+   to full. A trackpad has no pinch to offer the board, and before this the
+   only thing the button did was undo a gesture that could not be made. A
+   size set by fingers lands on the first step below it, so the button is
+   never a jump upward from wherever the board happens to be. */
+const Z_STEPS = [1, 0.75, 0.5];
+function resetZoom(){
+  const i = Z_STEPS.findIndex(z => z < piZoom - 0.005);
+  setZoom(i === -1 ? Z_STEPS[0] : Z_STEPS[i], true);
+}
+
+function toggleFlow(){
+  boardFlow = !boardFlow;
+  try{ localStorage.setItem(LAY_KEY, boardFlow ? '1' : '0'); }catch(e){}
+  renderBoard();
+}
+
+/* Two fingers on the board, and nothing else: one finger is a scroll or a
+   push to the other screen, and a pinch that began anywhere but the notes
+   belongs to whatever it began on. */
+(function(){
+  let d0 = 0, base = 1;
+  const gap = t => Math.hypot(
+    t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  const onBoard = el => {
+    const st = document.getElementById('boardStack');
+    return !!(st && el && st.contains(el));
+  };
+  document.addEventListener('touchstart', e => {
+    if(e.touches.length !== 2 || !onBoard(e.target)){ d0 = 0; return; }
+    d0 = gap(e.touches); base = piZoom;
+  }, {passive:true});
+  document.addEventListener('touchmove', e => {
+    if(!d0 || e.touches.length !== 2) return;
+    const d = gap(e.touches);
+    if(d > 0) setZoom(base * d / d0, false);
+  }, {passive:true});
+  const done = () => { if(d0){ d0 = 0; setZoom(piZoom, true); } };
+  document.addEventListener('touchend', done, {passive:true});
+  document.addEventListener('touchcancel', done, {passive:true});
+})();
+
 function renderBoard(){
   const mm = viewMonth;
   const notes = sortedNotes(mm);
   const stack = document.getElementById('boardStack');
+  applyView();
 
   /* A category with nothing in it had no + of its own, because the + belonged
      to a row of notes and there was no row — so a month that was missing the
@@ -2372,21 +2667,38 @@ function renderBoard(){
      an empty month opens with one + per category rather than a single one
      that writes the whole month at once. */
   const missing = base => !notes.some(n => baseName(n.name) === base);
-  const startBtn = base =>
-    '<div class="start-row"><button class="add-btn" aria-label="추가"' +
-      ' style="color:#' + escapeAttr(colorSlot(base)) + ';"' +
+  /* The + that adds one more note of a tier, in that tier's own paper
+     colour. It stands inside the row it belongs to rather than on a line of
+     its own: a line of its own put three times the space between two tiers
+     that there is between two notes, and a board is one wall of paper, not a
+     list of headings. The colour is what says which tier it adds to now that
+     it no longer sits under one. */
+  const addBtn = base =>
+    '<button class="add-btn" aria-label="추가"' +
+      (base ? ' style="color:#' + escapeAttr(colorSlot(base)) + ';"' : '') +
       ' onclick="addNote(' + JSON.stringify(base).replace(/"/g, '&quot;') + ')">' +
-      PLUS_SVG + '</button></div>';
+      PLUS_SVG + '</button>';
+
+  /* Which note of each kind is the last one written. That note carries the +
+     that adds the next, in its own bottom left corner — so the + is always
+     against the paper it extends rather than adrift at the end of a row.
+     The homework is not a note and keeps its own. */
+  const lastOf = {};
+  notes.forEach((n, i) => {
+    if(!isHomework(n.name)) lastOf[baseName(n.name)] = i;
+  });
+  const pin = (note, i) =>
+    pinHtml(note, lastOf[baseName(note.name)] === i ? baseName(note.name) : '');
+  /* A tier with nothing in it is the same row with nothing but its +. */
+  const startBtn = base => '<div class="pi-row">' + addBtn(base) + '</div>';
 
   /* Notes of one name go into one row, which is what lets 쀼훈 and 쀼훈2 stand
      side by side; the + that adds one more follows that row. The homework is
      not a note and gets neither. */
   let html = '', open = false;
-  const closeRow = base => {
+  const closeRow = () => {
     if(!open) return;
-    html += '</div><div class="add-row"><button class="add-btn" aria-label="추가"' +
-      ' onclick="addNote(' + JSON.stringify(base).replace(/"/g, '&quot;') + ')">' +
-      PLUS_SVG + '</button></div>';
+    html += '</div>';
     open = false;
   };
 
@@ -2394,27 +2706,26 @@ function renderBoard(){
      would have stood rather than being swept to the end. */
   let at = 0;
   TIER_ORDER.forEach(base => {
-    if(missing(base)){ closeRow(''); html += startBtn(base); return; }
+    if(missing(base)){ closeRow(); html += startBtn(base); return; }
     while(at < notes.length && baseName(notes[at].name) === base){
-      const note = notes[at++];
+      const i = at, note = notes[at++];
       if(!open){ html += '<div class="pi-row">'; open = true; }
-      html += pinHtml(note);
+      html += pin(note, i);
     }
-    closeRow(base);
+    closeRow();
   });
 
   /* Whatever is left: the homework, and any name invented by hand. */
   while(at < notes.length){
-    const note = notes[at++];
+    const i = at, note = notes[at++];
     const base = baseName(note.name);
-    if(isHomework(note.name)){ closeRow(''); html += homeworkHtml(note); continue; }
-    const prev = notes[at - 2];
-    if(prev && baseName(prev.name) !== base) closeRow(baseName(prev.name));
+    if(isHomework(note.name)){ closeRow(); html += homeworkHtml(note); continue; }
+    const prev = notes[i - 1];
+    if(prev && baseName(prev.name) !== base) closeRow();
     if(!open){ html += '<div class="pi-row">'; open = true; }
-    html += pinHtml(note);
+    html += pin(note, i);
   }
-  const last = notes[notes.length - 1];
-  if(last) closeRow(baseName(last.name));
+  closeRow();
 
   /* The homework stands whether or not anything has been written in it. With
      no note there was no block, and with no block there was no + — the only
@@ -2422,11 +2733,49 @@ function renderBoard(){
      have to find. Both names, both +, from an empty month on. */
   if(!notes.some(n => isHomework(n.name))) html += homeworkHtml(null);
 
+  html += monthTalksHtml(mm);
+
   /* The way to see and rewrite the whole month at once, bottom left — the
      same thing, and the same wording, as the manual editor in Voca/Para. */
   html += '<div class="board-foot"><button class="btn btn-ghost"' +
     ' onclick="openBoardText()">Edit by txt manually</button></div>';
   stack.innerHTML = html;
+}
+
+/* The month's 쀼톡, under the board. The same thing the week column opens —
+   the marks, the week's spending, and what was said — but read rather than
+   pressed: the board is where the month is looked back on, and having to
+   open four popups to do that was four taps too many.
+
+   The heading is the only button. The words beneath it are left alone so a
+   finger dragging across them is choosing text to copy rather than opening
+   something. */
+function monthTalksHtml(mm){
+  const y = 2000 + parseInt(mm.slice(0, 2), 10);
+  const m = parseInt(mm.slice(2, 4), 10) - 1;
+  const days = new Date(y, m + 1, 0).getDate();
+  /* Named by the Monday they start on, so the weeks come out in order and
+     each is counted once however many of its days fall in this month. */
+  const keys = [];
+  for(let d = 1; d <= days; d++){
+    const k = weekKey(mm + pad2(d));
+    if(keys.indexOf(k) === -1) keys.push(k);
+  }
+  const cards = keys.filter(k => !talkEmpty(talkOf(k))).map(k => {
+    const t = talkOf(k);
+    return '<div class="talk-card">' +
+      '<button class="talk-head" onclick="openTalk(\'' + k + '\')">' +
+        '<img class="talk-mark" src="' + TALK_ICON + '" alt="쀼톡">' +
+        '<span>' + escapeHtml(talkTitle(k)) + '</span>' +
+      '</button>' +
+      weekTallyHtml(k) + weekCashHtml(k) +
+      TALK_SECTIONS.filter(s => t[s.key].length).map(s =>
+        '<span class="talk-part">' +
+          t[s.key].map(x => '<span>' + mdToHtml(x) + '</span>').join('<br>') +
+        '</span>').join('') +
+    '</div>';
+  });
+  return cards.length ? '<div class="talk-list">' + cards.join('') + '</div>' : '';
 }
 
 /* A task is reworded by pressing it, the way the to-do list in Time is
@@ -2629,6 +2978,17 @@ async function noteTyping(el, id){
   saveBoard().catch(() => {});
 }
 
+/* Back to the colour the tier is set to in Options. The note stops carrying
+   a colour of its own rather than being painted the default, so a later
+   change in Options reaches it again. */
+async function noteColorReset(id){
+  const note = notesOf(viewMonth).find(n => n.id === id);
+  if(!note) return;
+  note.color = '';
+  renderBoard();
+  saveBoard().catch(() => {});
+}
+
 async function noteColorPick(el, id){
   const note = notesOf(viewMonth).find(n => n.id === id);
   if(!note) return;
@@ -2657,6 +3017,21 @@ async function closeNote(){
 function noteEditKey(ev){
   if(ev.key === 'Escape'){ ev.preventDefault(); closeNote(); }
 }
+
+/* Pressing away from an open note closes it. Everything typed is already
+   saved on each keystroke, so there is nothing to lose and nothing to
+   confirm — the only reason a note stayed open was that ✓ was the one way
+   out of it. Listened for on the way down rather than on the click, so the
+   note is gone before whatever was pressed takes focus. */
+document.addEventListener('pointerdown', e => {
+  if(!noteEditId) return;
+  /* Inside the open note — the box, the colour, the ✓ — is not outside it.
+     Nor is a popup: opening Options over the board should not quietly fold
+     the note underneath it. */
+  if(e.target.closest && (e.target.closest('.pi.editing') ||
+     e.target.closest('.modal-overlay'))) return;
+  closeNote();
+}, true);
 
 async function deleteNoteNow(el, id){
   if(!armed(el, '한 번 더 누르면 지웁니다')) return;
@@ -3319,26 +3694,24 @@ function dayListHtml(code, field, tail){
        knew; an empty box says it to anyone, and it is where the writing was
        going to happen anyway. Prose gets one until it has been written in,
        and then none: there is one diary a day, not a list of them. */
-    /* An empty list is a box with its own name in it — that is the whole
-       invitation, and it is where the writing was going to happen anyway.
-       Once there is a line, the box has said what it was for and gives way
-       to the + that adds the next one. */
+    /* An empty list is its own name and a +, with no box drawn round it.
+       The box said "write here" and was right, but three framed blanks and
+       a fourth beside a drawing made the day read as a form to fill in
+       rather than a page to write on — and no two of them could be made the
+       same height, because each held a different size of writing. Pressing
+       the name opens the line, which is the one thing the box was for.
+       Once there is a line, the name gives way to the + that adds another. */
     (rows.length
       ? (prose ? ''
         : '<div class="hw-row"><button class="hw-add" aria-label="' + meta.label + ' 추가"' +
             (red ? ' style="color:var(--rust);"' : '') +
             ' onclick="addDayLine(\'' + code + '\',\'' + field + '\')">' + PLUS_SVG +
           '</button></div>')
-      : '<div class="todo-row">' + (prose
-          ? '<textarea class="todo-edit-input prose new" rows="2"' +
-              ' placeholder="' + escapeAttr(meta.label) + '"' +
-              ' onblur="addDayLineFrom(this,\'' + code + '\',\'' + field + '\')"' +
-              ' aria-label="' + meta.label + '"></textarea>'
-          : '<input type="text" class="todo-edit-input new' + (red ? ' red' : '') + '"' +
-              ' placeholder="' + escapeAttr(meta.label) + '"' +
-              ' onkeydown="newLineKey(event,\'' + code + '\',\'' + field + '\')"' +
-              ' onblur="addDayLineFrom(this,\'' + code + '\',\'' + field + '\')"' +
-              ' aria-label="' + meta.label + '">') +
+      : '<div class="todo-row empty-row">' +
+          '<button class="empty-add"' + (red ? ' style="color:var(--rust);"' : '') +
+            ' onclick="addDayLine(\'' + code + '\',\'' + field + '\')">' +
+            '<span>' + escapeHtml(meta.label) + '</span>' + PLUS_SVG +
+          '</button>' +
         '</div>') +
   '</div>';
 }
@@ -3352,35 +3725,13 @@ function focusDayEdit(){
   if(box){ box.focus(); box.select(); }
 }
 
-/* Enter commits and leaves the box ready for the next one, which is how a
-   list gets written without reaching for anything. */
-function newLineKey(ev, code, field){
-  if(ev.key === 'Enter'){ ev.preventDefault(); addDayLineFrom(ev.target, code, field); }
-}
-
-async function addDayLineFrom(el, code, field){
-  const t = String(el.value || '').replace(/\s+$/, '');
-  if(!t) return;                      // left empty, nothing is added
-  el.value = '';
-  const s = sharedOf(code);
-  if(field === 'diary') s.diary = trimTextLines(t);
-  else s[field].push(t);
-  shared[code] = s;
-  dayEditKey = null;
-  redrawDay(code);
-  /* Back into the blank, so a second line can follow the first. */
-  const box = document.querySelector('#todayBox .todo-edit-input.new');
-  if(box) box.focus();
-  saveShared().catch(() => {});
-}
-
 async function addDayLine(code, field){
   const s = sharedOf(code);
-  s[field].push(DAY_LISTS[field].add);
+  /* Empty, and opened for writing straight away. It used to arrive carrying
+     the words "새 일정" so the row could be seen at all; now the row IS the
+     cursor, and a line left unwritten takes itself away again on blur. */
+  s[field].push('');
   shared[code] = s;
-  /* Opened for rewording straight away: a line that reads "새 일정" is a
-     placeholder, and asking for a second tap to replace it would be a step
-     with nothing in it. */
   dayEditKey = code + '|' + field + '|' + (s[field].length - 1);
   redrawDay(code);
   focusDayEdit();
@@ -3457,11 +3808,20 @@ function parseTalkText(text){
 }
 
 /* The week it covers, said as the two dates it runs between. */
+/* A week named by which one of its month it is, not by the two dates it
+   runs between. A week belongs to the month its MONDAY falls in — that is
+   already the thing the whole record is keyed by — and its number is how
+   many Mondays of that month have come round including itself. So the week
+   of 19 October 2026 is October's third Monday and reads "October W3", and
+   the week starting 28 September reads "September W4" even though most of
+   it is October.
+
+   "3rd W" is not something written in English; "W3" is, on a calendar. */
 function talkTitle(key){
   const a = dateFromCode(key);
-  const b = new Date(a.getFullYear(), a.getMonth(), a.getDate() + 6);
-  return MONTHS[a.getMonth()] + ' ' + a.getDate() + ' – ' +
-    (a.getMonth() === b.getMonth() ? '' : MONTHS[b.getMonth()] + ' ') + b.getDate();
+  /* The Mondays before this one in the same month, plus this one. */
+  const n = Math.floor((a.getDate() - 1) / 7) + 1;
+  return MONTHS[a.getMonth()] + ' W' + n;
 }
 
 let talkKey = null;
