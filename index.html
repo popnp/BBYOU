@@ -104,6 +104,37 @@
     padding:var(--gap-top) var(--sp-4) var(--sp-7);
   }
   .wrap{max-width:var(--content-w); margin:0 auto;}
+  /* The notes are the one thing here that wants the whole screen. Left up on
+     a wall, a column of paper 998px wide with black down either side is a
+     smaller board than the screen it is standing on, and in one wrapping run
+     the cap decided how many notes could share a line. So the board and the
+     note page give up the measure; the month does not — a grid stretched
+     across 2000px is a page of empty rectangles. */
+  body.pi-pane .wrap{max-width:none;}
+  /* Everything that is not paper keeps the measure, so only the notes
+     spread: the month at one end of a 2000px row and 설정 at the other is a
+     row nobody can read across, a line of homework that wide is a tick
+     stranded from its wording, and a week's note read at that width is one
+     line of text per week. They stay at 998 and centre under the paper. */
+  body.pi-pane #cloudBanner,
+  body.pi-pane .month-row{
+    max-width:var(--content-w); margin-left:auto; margin-right:auto;
+  }
+  /* The three bands under the notes keep it too, but not by being made
+     narrow: in one wrapping run they are flex items of the board, and an
+     item that max-width has shrunk to 998 is narrow enough to be pulled up
+     onto the line of paper above it — which is where the homework landed,
+     off-centre beside the last note. They stay the full width of the board,
+     which holds each on a line of its own, and the measure is cut out of
+     them as padding instead. On a screen narrower than 998 there is nothing
+     to cut, and the max() leaves them alone. */
+  body.pi-pane .hw-block,
+  body.pi-pane .talk-list,
+  body.pi-pane .board-foot,
+  body.pi-pane:not(.wall) .board-tools{
+    padding-left:max(0px, calc((100% - var(--content-w)) / 2));
+    padding-right:max(0px, calc((100% - var(--content-w)) / 2));
+  }
 
   /* ---- the sync banner, word for word the one the other two apps show ---- */
   #cloudBanner{
@@ -123,7 +154,14 @@
     font-family:var(--font-ui); font-size:var(--fs-body); font-weight:400;
     background:none; border:none; border-radius:0; padding:0;
     color:var(--text-muted); cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center;
+    line-height:0;
   }
+  /* The same three dots the other app opens its drawer with, drawn from the
+     same 24-unit box. 24px rather than that app's 34: there it stands alone
+     in a drawer, here it shares a line with the month and two 24px arrows,
+     and the larger one made the row taller than the figure in it. */
+  .opt-dots{width:24px; height:24px; display:block; fill:currentColor;}
   .pane-btn.on{color:var(--ink); font-weight:500;}
   .month-nav{display:flex; align-items:center; gap:var(--sp-1);}
 
@@ -295,8 +333,16 @@
      that has to be looked for. */
   body.wall .board-tools{
     position:fixed; top:var(--sp-3); left:var(--sp-3);
-    margin:0; z-index:5;
+    margin:0; padding:0; z-index:5;
   }
+  /* Nobody has touched it for three seconds, so it is being looked at rather
+     than used: the switches and the dots fade out and the wall is only what
+     is on it. Any movement at all brings them back. Off the wall they never
+     go, because there the controls are the page. */
+  body.wall .board-tools,
+  body.wall .pane-dots{transition:opacity 0.6s ease;}
+  body.wall.idle .board-tools,
+  body.wall.idle .pane-dots{opacity:0; pointer-events:none;}
   /* Which screen this is, kept on the wall. It is the one thing up there
      that is not a control over the view — it says where you are among the
      three — and without it a wall gives no way back to the other two but a
@@ -336,6 +382,15 @@
   /* Lit when it is doing something: the board is laid out the other way, or
      the notes are not at their own size. */
   .tool-btn.on{color:var(--ink); border-color:var(--ink);}
+  /* Pressed, WebKit rings a button in its own rounded outline, which is the
+     one curve anywhere in this app and sat around whichever of the three was
+     touched last. Which button is on is already said by the border going
+     white, so the ring has nothing to add. A keyboard still gets one, drawn
+     square like everything else. */
+  .tool-btn:focus,
+  .pane-dots button:focus{outline:none;}
+  .tool-btn:focus-visible,
+  .pane-dots button:focus-visible{outline:1px solid var(--ink); outline-offset:2px;}
   .tool-btn svg{display:block; width:16px; height:16px;}
   /* Notes of one tier stand side by side and drop to the next line when the
      row runs out, which is how they behave on a wall. Centred, so a single
@@ -1055,7 +1110,18 @@
   /* The week's note, on the board rather than over it. White paper and the
      four names declared again inside, the way the popup and the day sheets
      do it, so every rule within simply follows. */
-  .talk-list{margin-top:var(--sp-5);}
+  /* The weeks laid out the way the board above them is: side by side and
+     wrapping, rather than one tall column that puts October's last week a
+     screen and a half below its first. */
+  .talk-list{
+    margin-top:var(--sp-5);
+    display:flex; flex-wrap:wrap; justify-content:center;
+    align-items:flex-start; gap:var(--sp-3);
+    /* A flex item will not shrink past the widest thing inside it unless it
+       is told it may. Without this a 360px card held the list at 360 on a
+       358px phone and the page scrolled sideways by two pixels. */
+    min-width:0;
+  }
   .talk-card{
     --paper:#FFFFFF;
     --ink:#111111;
@@ -1064,8 +1130,14 @@
     --link-blue:#2F4C86;
     background:var(--paper); color:var(--ink);
     padding:var(--sp-4); text-align:left;
+    /* 360 is the floor, not the size: the day's popup is 360 and a week
+       should never be read narrower than a day. Above it they share the
+       line — two across 998 is 493 each, and white that stops at 732 with
+       266 of black beside it reads as a column that failed to reach the
+       edge rather than as two cards. Below 732 only one fits, and it takes
+       the whole line. */
+    flex:1 1 360px; min-width:min(360px, 100%); max-width:100%;
   }
-  .talk-card + .talk-card{margin-top:var(--sp-3);}
   .talk-head{
     display:flex; align-items:center; gap:var(--sp-2);
     font-family:var(--font-ui); font-size:var(--fs-label); font-weight:500;
@@ -1194,7 +1266,7 @@ if('serviceWorker' in navigator){
     <button onclick="setPane('cal')" aria-label="Month"><i></i></button>
     <button onclick="setPane('note')" aria-label="Notes"><i></i></button>
   </span>
-  <button class="pane-btn" id="paneBtnOpt" onclick="toggleOptions()">Options</button>
+  <button class="pane-btn" id="paneBtnOpt" onclick="toggleOptions()" aria-label="Options" title="Options"><svg class="opt-dots" viewBox="0 0 24 24" aria-hidden="true"><circle cx="4.6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19.4" cy="12" r="1.6"/></svg></button>
 </div>
 
 <!-- ================= PANE 1 — the board ================= -->
@@ -1351,7 +1423,7 @@ if('serviceWorker' in navigator){
     </div>
   </div></div>
 
-  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-27s</p>
+  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-27v</p>
 </div></div>
 <script>
 /* =========================================================================
@@ -1722,6 +1794,7 @@ let me = 'a';
 let piZoom = {board:1, note:1};   // 1 is the note's own size, per board
 let boardFlow = false;            // false is a row per tier
 let wallpaper = false;            // everything but the thing itself, hidden
+let idleTimer = 0;                // counting down to putting the switches away
 const Z_MIN = 0.35, Z_MAX = 1.6;
 let viewMonth = '';               // YYMM being looked at
 let pane = 'board';
@@ -1909,6 +1982,9 @@ function setPane(p){
      in — the month does not change when it opens. */
   if(p === 'note') renderNotes();
   document.body.classList.toggle('note-pane', p === 'note');
+  /* The two screens made of paper, told apart from the month: they are the
+     ones that take the whole width. */
+  document.body.classList.toggle('pi-pane', p !== 'cal');
   applyView();
 }
 
@@ -2803,6 +2879,9 @@ function applyView(){
     el.classList.toggle('on', wallpaper);
   });
   document.body.classList.toggle('wall', wallpaper);
+  /* Off the wall there is nothing to hide, and the count starts again every
+     time the wall is entered or the page is changed. */
+  wakeControls();
   /* The month row stands above all three pages, so it cannot be hidden from
      inside one. On a wall the month keeps its figure and arrows — a calendar
      that cannot be stepped shows one month for ever — and the other two
@@ -2817,6 +2896,23 @@ function applyView(){
    looking at it, and none of it belongs on a wall. The month keeps only its
    grid. What stays either way is this switch, which is the way back, and the
    sync banner, which is the one thing worth interrupting a wall for. */
+/* A wall is for looking at. Three seconds without a finger, a mouse or a key
+   and the switches go; the next movement of any kind brings them back. The
+   listeners run whatever screen this is, and the rules only act on a wall, so
+   there is nothing to turn on and off as the pages change. Capture, because a
+   press inside a note must wake them too. */
+const IDLE_MS = 3000;
+function wakeControls(){
+  document.body.classList.remove('idle');
+  clearTimeout(idleTimer);
+  if(wallpaper) idleTimer = setTimeout(() => {
+    document.body.classList.add('idle');
+  }, IDLE_MS);
+}
+['mousemove', 'mousedown', 'touchstart', 'touchmove', 'keydown', 'wheel', 'scroll']
+  .forEach(ev => document.addEventListener(ev, wakeControls,
+    {passive: true, capture: true}));
+
 function toggleWall(){
   wallpaper = !wallpaper;
   try{ localStorage.setItem(WALL_KEY, wallpaper ? '1' : '0'); }catch(e){}
