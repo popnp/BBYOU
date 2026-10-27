@@ -125,7 +125,7 @@
     color:var(--text-muted); cursor:pointer;
   }
   .pane-btn.on{color:var(--ink); font-weight:500;}
-  .month-nav{display:flex; align-items:center; gap:var(--sp-3);}
+  .month-nav{display:flex; align-items:center; gap:var(--sp-1);}
 
   /* Which of the two screens this is, and the way to the other one on a
      machine with no touch. These sat absolutely centred on the screen and
@@ -133,7 +133,7 @@
      either side reaches the middle of a phone. So they stand in the row with
      everything else, in the space between the month and 설정. */
   .pane-dots{
-    display:flex; align-items:center; gap:var(--sp-2);
+    display:flex; align-items:center; gap:var(--sp-1);
     flex:0 0 auto;
   }
   .pane-dots button{
@@ -150,15 +150,30 @@
   .pane-dots button.on i{background:var(--ink);}
 
   /* ---- the month stepper, shared by both panes ---- */
+  /* The dots are lifted out of the row and centred on it, rather than held
+     in a middle column: with three screens to mark, three equal columns no
+     longer fit on a phone and the month broke onto a second line. Out of the
+     flow they are the middle of the row whatever stands either side, and the
+     month keeps the room it needs. */
   .month-row{
-    display:grid; grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr);
-    align-items:center; gap:var(--sp-3);
+    display:flex; align-items:center; gap:var(--sp-3);
+    position:relative;
     margin-bottom:var(--gap-block);
   }
-  .month-row .month-nav{justify-self:start;}
-  .month-row .pane-dots{justify-self:center;}
-  .month-row .pane-btn{justify-self:end;}
-  .month-label{font-size:var(--fs-lead); font-weight:500;}
+  .month-row .month-nav{flex:1 1 auto; min-width:0;}
+  /* The note page is not a month: nothing on it belongs to October, and a
+     figure that steps while the page does not move would only lie. */
+  body.note-pane .month-nav{visibility:hidden;}
+  .month-row .pane-dots{
+    position:absolute; left:50%; transform:translateX(-50%);
+  }
+  .month-row .pane-btn{flex:0 0 auto;}
+  /* Full size where there is room, and a step down on a narrow phone, where
+     the three dots are centred on the row and the month has to clear them. */
+  .month-label{
+    font-size:clamp(18px, 5.6vw, var(--fs-lead)); font-weight:500;
+    white-space:nowrap;
+  }
   .step-btn{
     width:24px; height:24px; padding:0;
     display:flex; align-items:center; justify-content:center;
@@ -258,7 +273,32 @@
   .board-stack.flow > .talk-list,
   .board-stack.flow > .board-foot{flex:0 0 100%; order:2;}
 
-  /* The two controls over the board, top left. */
+  /* Up on a screen: the thing itself, and the switch back. Everything that
+     is for working ON the month rather than looking at it goes. The month
+     keeps its figure and its two arrows — a calendar on a wall that cannot
+     be stepped is a calendar of one month. */
+  body.wall .pane-dots,
+  body.wall .pane-btn,
+  body.wall .hw-block,
+  body.wall .talk-list,
+  body.wall .board-foot,
+  body.wall #todayBox{display:none;}
+  /* Standing on a wall, the page sits in the middle of the screen rather
+     than at the top of it: a half-full board pinned to the ceiling with a
+     screen of black under it is not a thing anyone would hang. */
+  body.wall .wrap{
+    min-height:100vh;
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  /* Held in the corner rather than carried with the page: the page is in the
+     middle of the screen now, and a way out that drifts with it is a way out
+     that has to be looked for. */
+  body.wall .board-tools{
+    position:fixed; top:var(--sp-3); left:var(--sp-3);
+    margin:0; z-index:5;
+  }
+
+  /* The controls over each screen, top left. */
   .board-tools{
     display:flex; align-items:center; gap:var(--sp-2);
     margin-bottom:var(--sp-3);
@@ -854,7 +894,7 @@
   /* In a column a child is only as wide as its content, and the wording has
      to have the cell's width to be wrapped and cut against. Only the wording:
      the same rule on every child stretched the 4px diary dot into a bar. */
-  .cal-cell > .cal-sched{width:100%;}
+  .cal-cell > .cal-sched, .cal-cell > .cal-head{width:100%;}
   .cal-cell.empty{background:none; cursor:default;}
   .cal-daynum{font-size:var(--fs-cell); color:var(--ink); display:block;}
   /* Saturday and Sunday are days off, which is what the red says everywhere
@@ -862,15 +902,33 @@
   .cal-cell.weekend .cal-daynum{color:var(--rust);}
   /* The figure and, beside it, the small square that says Korea keeps this
      day. Its own row, so today's disc keeps the figure to itself. */
-  .cal-head{display:flex; align-items:flex-start; gap:3px;}
+  /* The figure at one end, what the day is at the other. */
+  .cal-head{
+    display:flex; align-items:baseline; justify-content:space-between;
+    gap:3px; width:100%;
+  }
+  .cal-head .cal-daynum{flex:0 0 auto;}
   /* A day Japan is off, which is the one that decides whether anyone is at
      work. Two names, so `.cal-cell.today .cal-daynum` still out-ranks it and
      today stays white on its disc. */
   .cal-daynum.hol-jp{color:var(--rust);}
-  .cal-kr{
-    width:4px; height:4px; flex:0 0 auto; margin-top:5px;
-    background:var(--text-muted); display:block;
+  /* A day off says which one it is, on the date's own line and pushed to the
+     far end of the cell. Wrapped underneath it took two lines of a cell that
+     has three of errands to show; cut at the edge it says as much as fits,
+     which on a day off is usually the whole of it. */
+  .cal-hol{
+    flex:0 1 auto; min-width:0;
+    font-size:10px; font-weight:400; line-height:1.2;
+    white-space:nowrap; overflow:hidden; text-align:right;
   }
+  .cal-hol.jp{color:var(--rust);}
+  .cal-hol.kr{color:var(--text-muted);}
+  /* The ground under a day off — a holiday or either end of the weekend.
+     Deeper than the #2A2A2A it started at: with two columns of every week
+     carrying it as well as the holidays, the lighter grey was most of the
+     month and read as noise rather than as a mark. */
+  .cal-cell.holiday,
+  .cal-cell.weekend{background:#222222;}
   /* The white sheet already says which day is being written, so the date on
      it needs no second mark of its own. */
   /* The day being written is a white sheet in a black month — today until
@@ -894,7 +952,14 @@
     margin:-2px 0 2px -2px;
   }
   /* Output, then input-or-exercise. Weekends have neither. */
-  .cal-marks{display:flex; gap:2px; margin-top:2px;}
+  /* What was done and whether a line was written, together on one row at the
+     bottom of the cell. `margin-top:auto` is what holds it there however much
+     wording stands above it, so the row of a week reads along its own foot. */
+  .cal-foot{
+    display:flex; align-items:center; gap:3px;
+    margin-top:auto; padding-top:2px;
+  }
+  .cal-marks{display:flex; gap:2px;}
   /* Empty is an outline; filled is that mark's own colour, written on by the
      grid so the three can be told apart at a glance. */
   .cal-sq{width:8px; height:8px; border:0.5px solid var(--line-b); display:block;}
@@ -902,11 +967,11 @@
      above the ticks, and clipped rather than wrapped forever — the cell says
      what is on, the day says the rest. */
   .cal-sched{
-    /* Two lines, cut at the end of the second. `text-overflow` counts one
+    /* Three lines, cut at the end of the third. `text-overflow` counts one
        line only, so the box model that can count lines is the one used here —
        prefixed, which is how every browser still spells it. */
     display:-webkit-box;
-    -webkit-line-clamp:2;
+    -webkit-line-clamp:3;
     -webkit-box-orient:vertical;
     overflow:hidden;
     font-size:var(--fs-cell); font-weight:400; line-height:1.3;
@@ -922,7 +987,7 @@
      is the only thing left that needs a mark. */
   .cal-dot{
     width:4px; height:4px; border-radius:50%;
-    background:var(--text-muted); display:block; margin-top:3px;
+    background:var(--text-muted); display:block; flex:0 0 auto;
   }
 
   /* ---- the eighth column: the week's 쀼톡 ---- */
@@ -969,6 +1034,13 @@
     padding:var(--sp-4); text-align:left;
   }
   .talk-card + .talk-card{margin-top:var(--sp-3);}
+  /* The week's errands, under its marks. Plain ink: they are the week, not
+     a note about it. */
+  .tally-sched{
+    margin:var(--sp-3) 0 0;
+    font-family:var(--font-ui); font-size:var(--fs-label); font-weight:400;
+    line-height:1.5; color:var(--ink); overflow-wrap:anywhere;
+  }
   .talk-head{
     display:flex; align-items:center; gap:var(--sp-2);
     font-family:var(--font-ui); font-size:var(--fs-label); font-weight:500;
@@ -1095,6 +1167,7 @@ if('serviceWorker' in navigator){
   <span class="pane-dots" id="paneDots">
     <button onclick="setPane('board')" aria-label="Board"><i></i></button>
     <button onclick="setPane('cal')" aria-label="Month"><i></i></button>
+    <button onclick="setPane('note')" aria-label="Notes"><i></i></button>
   </span>
   <button class="pane-btn" id="paneBtnOpt" onclick="toggleOptions()">Options</button>
 </div>
@@ -1104,14 +1177,29 @@ if('serviceWorker' in navigator){
   <!-- Top left, over the notes: how the board is laid out, and how big it is
        drawn. Both are this device's own view of the month, not the month. -->
   <div class="board-tools">
-    <button class="tool-btn" id="layoutBtn" onclick="toggleFlow()" aria-label="배치"></button>
-    <button class="tool-btn" id="zoomBtn" onclick="resetZoom()" aria-label="포스트잇 크기">100%</button>
+    <button class="tool-btn js-layout" onclick="toggleFlow()" aria-label="배치"></button>
+    <button class="tool-btn js-zoom" onclick="resetZoom()" aria-label="포스트잇 크기">100%</button>
+    <button class="tool-btn js-wall" onclick="toggleWall()" aria-label="바탕화면 모드"></button>
   </div>
   <div class="board-stack" id="boardStack"></div>
 </section>
 
+<!-- ================= PANE 3 — the note page ================= -->
+<section id="paneNote" style="display:none;">
+  <div class="board-tools">
+    <button class="tool-btn js-layout" onclick="toggleFlow()" aria-label="배치"></button>
+    <button class="tool-btn js-zoom" onclick="resetZoom()" aria-label="포스트잇 크기">100%</button>
+    <button class="tool-btn js-wall" onclick="toggleWall()" aria-label="바탕화면 모드"></button>
+  </div>
+  <div class="board-stack" id="noteStack"></div>
+</section>
+
 <!-- ================= PANE 2 — the month ================= -->
 <section id="paneCal" style="display:none;">
+  <!-- The month's one control, in the same corner the board keeps its own. -->
+  <div class="board-tools">
+    <button class="tool-btn js-wall" onclick="toggleWall()" aria-label="바탕화면 모드"></button>
+  </div>
   <div class="cal-grid" id="calGrid"></div>
   <div class="today-list" id="todayBox"></div>
   <!-- Same place and same manner as the board's own text editor: the foot of
@@ -1195,6 +1283,7 @@ if('serviceWorker' in navigator){
     <p class="hint" style="margin-bottom:var(--sp-3);">보고 싶은 것만 골라 꺼낸 다음, 글로 고쳐서 넣습니다. 넣은 글 안에 있는 것만 바뀌고 나머지는 그대로 있습니다.</p>
     <div class="filter-row" id="dataKinds">
       <button class="chk on" onclick="toggleKind(this,'review')"><span class="chk-box"></span>쀼리뷰</button>
+      <button class="chk on" onclick="toggleKind(this,'note')"><span class="chk-box"></span>노트</button>
       <button class="chk on" onclick="toggleKind(this,'talk')"><span class="chk-box"></span>쀼톡</button>
       <button class="chk on" onclick="toggleKind(this,'day')"><span class="chk-box"></span>쀼일</button>
       <button class="chk on" onclick="toggleKind(this,'cash')"><span class="chk-box"></span>가계쀼</button>
@@ -1237,7 +1326,7 @@ if('serviceWorker' in navigator){
     </div>
   </div></div>
 
-  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-27k</p>
+  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-27q</p>
 </div></div>
 <script>
 /* =========================================================================
@@ -1535,6 +1624,19 @@ function cloudStatus(ok){
    ends. The button shows the layout in force, not the one it would switch to
    — a control that shows its own state is read once, a control that shows
    its effect is read twice. */
+/* Corners pushed out, then pulled back in: the way every screen says "this
+   and nothing else" and then says it the other way round. */
+const WALL_OUT_SVG =
+  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"' +
+  ' stroke-linecap="square" aria-hidden="true">' +
+  '<path d="M1 5V1h4"/><path d="M11 1h4v4"/>' +
+  '<path d="M15 11v4h-4"/><path d="M5 15H1v-4"/></svg>';
+const WALL_IN_SVG =
+  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"' +
+  ' stroke-linecap="square" aria-hidden="true">' +
+  '<path d="M5 1v4H1"/><path d="M11 1v4h4"/>' +
+  '<path d="M15 11h-4v4"/><path d="M1 11h4v4"/></svg>';
+
 /* Both drawn out of the one thing the board is made of — a square of paper.
    Bars said "a list" where the board is squares; stacked squares say the
    same arrangement in the board's own unit. */
@@ -1569,6 +1671,7 @@ const ME_KEY = 'bbyu-me';         // local only: which of the two this device is
    desktop looking at the same month want different answers. */
 const Z_KEY   = 'bbyu-zoom';      // local only: how big the notes draw here
 const LAY_KEY = 'bbyu-layout';    // local only: stacked by tier, or one run
+const WALL_KEY = 'bbyu-wall';     // local only: the board left up on a screen
 
 /* ---- state ------------------------------------------------------------
    A month is a list of notes in the order they were written. A note is a name
@@ -1589,6 +1692,7 @@ let holi   = {};                  // {'261012': {jp:'스포츠의 날', kr:''}}
 let me = 'a';
 let piZoom = 1;                   // 1 is the note's own size
 let boardFlow = false;            // false is a row per tier
+let wallpaper = false;            // everything but the thing itself, hidden
 const Z_MIN = 0.35, Z_MAX = 1.6;
 let viewMonth = '';               // YYMM being looked at
 let pane = 'board';
@@ -1760,13 +1864,32 @@ function talkEmpty(t){ return !t.good.length && !t.better.length && !t.etc.lengt
 /* =========================================================================
    Panes
    ========================================================================= */
+/* The order the screens stand in, which is the order a push walks them. */
+const PANES = ['board', 'cal', 'note'];
+
 function setPane(p){
   pane = p;
-  document.getElementById('paneBoard').style.display = (p === 'board') ? '' : 'none';
-  document.getElementById('paneCal').style.display   = (p === 'cal')   ? '' : 'none';
-  const dots = document.getElementById('paneDots').children;
-  dots[0].classList.toggle('on', p === 'board');
-  dots[1].classList.toggle('on', p === 'cal');
+  PANES.forEach((name, i) => {
+    const el = document.getElementById(
+      {board: 'paneBoard', cal: 'paneCal', note: 'paneNote'}[name]);
+    if(el) el.style.display = (p === name) ? '' : 'none';
+    const dot = document.getElementById('paneDots').children[i];
+    if(dot) dot.classList.toggle('on', p === name);
+  });
+  /* The note page is a board of its own, and nothing redraws it on the way
+     in — the month does not change when it opens. */
+  if(p === 'note') renderNotes();
+  document.body.classList.toggle('note-pane', p === 'note');
+  applyView();
+}
+
+/* One screen along, in the direction of the push, stopping at either end:
+   wrapping round from the last to the first looks like a mistake when the
+   dots say plainly that there are three and you are on the last. */
+function stepPane(dir){
+  const at = PANES.indexOf(pane);
+  const to = Math.min(PANES.length - 1, Math.max(0, (at === -1 ? 0 : at) + dir));
+  if(PANES[to] !== pane) setPane(PANES[to]);
 }
 
 /* Options is a box over the board, not a pane of its own — so the month row
@@ -1812,7 +1935,8 @@ function toggleOptions(){
     const dx = t.clientX - x0, dy = t.clientY - y0;
     if(Math.abs(dy) > Math.abs(dx)){ live = false; return; }
     if(Math.abs(dx) > TRIGGER){
-      setPane(pane === 'cal' ? 'board' : 'cal');
+      /* Pushed to the left is onward, as the dots read. */
+      stepPane(dx < 0 ? 1 : -1);
       live = false;
     }
   }, {passive:true});
@@ -1837,7 +1961,7 @@ function toggleOptions(){
     const dx = e.clientX - mx, dy = e.clientY - my;
     if(Math.abs(dy) > Math.abs(dx)){ mlive = false; return; }
     if(Math.abs(dx) > TRIGGER){
-      setPane(pane === 'cal' ? 'board' : 'cal');
+      stepPane(dx < 0 ? 1 : -1);
       mlive = false;
     }
   });
@@ -1889,6 +2013,16 @@ const TIER_NAMES = {'쀼훈':1, '숙제':3};   // anything else is the middle ti
 /* The categories the board always offers, top to bottom. A month missing one
    of these is offered a + for it rather than simply not having it. */
 const TIER_ORDER = ['쀼훈', '아젠다', '크리에이티브 아젠다', '기타'];
+/* The note page is a board like any other, kept under a key that is not a
+   month — which is the whole of what makes it a page rather than a month:
+   nothing on it expires, and stepping the month does not touch it. Its notes
+   are all of one name, so they need no tier order and get none.
+   Everything else — opening one, writing on it, the colour, the +, the
+   layout, the zoom, the wall — is the board's own machinery unchanged. */
+const MEMO = 'memo';
+const MEMO_NAME = '노트';
+/* Which board the note functions are acting on. */
+const boardKey = () => (pane === 'note' ? MEMO : viewMonth);
 const HW_NAME = '숙제';
 /* The paper each kind of note starts on, so the three of them are told apart
    at a glance before anyone has picked a colour. Taken from the four the
@@ -1904,6 +2038,7 @@ const COLOR_SLOTS = [
   {key: '아젠다',          label: '아젠다',           def: '00E5FF'},
   {key: '크리에이티브 아젠다', label: '크리에이티브 아젠다', def: '2CE17A'},
   {key: '기타',            label: '기타',             def: 'C9C9C9'},
+  {key: '노트',            label: '노트',             def: 'FFFFFF'},
   {key: 'OutP',           label: 'OutP (C.S.)',     def: 'F2FF00'},
   {key: 'InP',            label: 'InP',             def: '00E5FF'},
   {key: 'Ex.',            label: 'Ex.',             def: 'FF4602'}
@@ -2192,6 +2327,13 @@ function boardToFullText(mm){
     sortedNotes(mm).map(noteToFullText).join('\n\n');
 }
 
+/* The note page in the same shape a month is written in, under a heading of
+   its own so nothing tries to read 'memo' as a date. */
+function memoToFullText(){
+  const ns = notesOf(MEMO);
+  return ns.length ? '<노트>\n\n' + ns.map(noteToFullText).join('\n\n') : '';
+}
+
 function talkToFullText(key){
   return '<쀼톡_' + key + '>\n\n' + talkToText(talkOf(key));
 }
@@ -2261,12 +2403,16 @@ function renameOldNames(){
 /* Everything, or the part of it a filter asks for. `want` names the kinds,
    `from`/`to` are day codes and may be empty. */
 function allToFullText(want, from, to){
-  const w = want || {review: true, talk: true, day: true, cash: true, holi: true};
+  const w = want || {review: true, talk: true, day: true, cash: true, holi: true, note: true};
   const inRange = code => (!from || code >= from) && (!to || code <= to);
   const blocks = [];
 
+  if(w.note){
+    const t = memoToFullText();
+    if(t) blocks.push(t);
+  }
   if(w.review){
-    Object.keys(board).filter(mm => notesOf(mm).length).sort()
+    Object.keys(board).filter(mm => mm !== MEMO && notesOf(mm).length).sort()
       /* A month is in range if it OVERLAPS it — its last day is not before
          the start and its first is not after the end. Testing the last day
          against both ends dropped October from 10/1–10/20. */
@@ -2309,7 +2455,7 @@ function allToFullText(want, from, to){
    ----------------------------------------------------------------------- */
 function parseAllText(text, baseYY){
   const yy = baseYY || todayCode().slice(0,2);
-  const out = {colors: null, people: null, board: {}, talks: {}, shared: {}, cash: {}, holi: {}};
+  const out = {colors: null, people: null, board: {}, talks: {}, shared: {}, cash: {}, holi: {}, memo: null};
   let kind = null, arg = '', buf = [];
 
   const flush = () => {
@@ -2324,6 +2470,8 @@ function parseAllText(text, baseYY){
     } else if(kind === '가계쀼'){
       const mm = parseMonthHead(arg, yy);
       if(mm) out.cash[mm] = parseCashText(body);
+    } else if(kind === '노트'){
+      out.memo = parseBoardText(body);
     } else if(kind === '공휴일'){
       const mm = parseMonthHead(arg, yy);
       if(mm) out.holi[mm] = parseHoliText(body);
@@ -2582,28 +2730,55 @@ function readView(){
     const z = parseFloat(localStorage.getItem(Z_KEY));
     if(isFinite(z)) piZoom = Math.min(Z_MAX, Math.max(Z_MIN, z));
     boardFlow = localStorage.getItem(LAY_KEY) === '1';
+    wallpaper = localStorage.getItem(WALL_KEY) === '1';
   }catch(e){}
 }
 
 /* Written straight onto the board rather than redrawn: the fingers move this
    many times a second, and rebuilding every note at each step would stutter.
    The rules do the rest from the one number. */
+/* Each control is drawn once per page that has it, so they are found by
+   class rather than by id — three pages cannot share one id between them,
+   and pressing any copy puts every page into the same state. */
 function applyView(){
-  const st = document.getElementById('boardStack');
-  if(st){
+  document.querySelectorAll('.board-stack').forEach(st => {
     st.style.setProperty('--pi-z', piZoom.toFixed(3));
     st.classList.toggle('flow', boardFlow);
-  }
-  const zb = document.getElementById('zoomBtn');
-  if(zb){
-    zb.textContent = Math.round(piZoom * 100) + '%';
-    zb.classList.toggle('on', Math.abs(piZoom - 1) > 0.005);
-  }
-  const lb = document.getElementById('layoutBtn');
-  if(lb){
-    lb.innerHTML = boardFlow ? FLOW_SVG : STACK_SVG;
-    lb.classList.toggle('on', boardFlow);
-  }
+  });
+  document.querySelectorAll('.js-zoom').forEach(el => {
+    el.textContent = Math.round(piZoom * 100) + '%';
+    el.classList.toggle('on', Math.abs(piZoom - 1) > 0.005);
+  });
+  document.querySelectorAll('.js-layout').forEach(el => {
+    el.innerHTML = boardFlow ? FLOW_SVG : STACK_SVG;
+    el.classList.toggle('on', boardFlow);
+  });
+  document.querySelectorAll('.js-wall').forEach(el => {
+    el.innerHTML = wallpaper ? WALL_IN_SVG : WALL_OUT_SVG;
+    el.classList.toggle('on', wallpaper);
+  });
+  document.body.classList.toggle('wall', wallpaper);
+  /* The month row stands above all three pages, so it cannot be hidden from
+     inside one. On a wall the month keeps its figure and arrows — a calendar
+     that cannot be stepped shows one month for ever — and the other two
+     pages, which the month does not govern, do without it. */
+  const mr = document.querySelector('.month-row');
+  if(mr) mr.style.display = (wallpaper && pane !== 'cal') ? 'none' : '';
+}
+
+/* Left up on a screen all day, the board is a board and nothing else: the
+   homework, the week's notes, the way into the text, the month row with its
+   arrows and Options — all of it is for working on the month rather than
+   looking at it, and none of it belongs on a wall. The month keeps only its
+   grid. What stays either way is this switch, which is the way back, and the
+   sync banner, which is the one thing worth interrupting a wall for. */
+function toggleWall(){
+  wallpaper = !wallpaper;
+  try{ localStorage.setItem(WALL_KEY, wallpaper ? '1' : '0'); }catch(e){}
+  applyView();
+  /* The white sheet that marks the day being written is drawn by the grid,
+     so the grid has to be drawn again for it to go. */
+  renderCalendar();
 }
 
 function setZoom(z, keep){
@@ -2627,6 +2802,7 @@ function toggleFlow(){
   boardFlow = !boardFlow;
   try{ localStorage.setItem(LAY_KEY, boardFlow ? '1' : '0'); }catch(e){}
   renderBoard();
+  renderNotes();
 }
 
 /* Two fingers on the board, and nothing else: one finger is a scroll or a
@@ -2636,10 +2812,7 @@ function toggleFlow(){
   let d0 = 0, base = 1;
   const gap = t => Math.hypot(
     t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
-  const onBoard = el => {
-    const st = document.getElementById('boardStack');
-    return !!(st && el && st.contains(el));
-  };
+  const onBoard = el => !!(el && el.closest && el.closest('.board-stack'));
   document.addEventListener('touchstart', e => {
     if(e.touches.length !== 2 || !onBoard(e.target)){ d0 = 0; return; }
     d0 = gap(e.touches); base = piZoom;
@@ -2653,6 +2826,38 @@ function toggleFlow(){
   document.addEventListener('touchend', done, {passive:true});
   document.addEventListener('touchcancel', done, {passive:true});
 })();
+
+/* Whichever of the two boards is on screen. Everything a note does — being
+   opened, written on, recoloured, deleted — happens on one of them, and the
+   note page is drawn by a different function from the month. */
+function redrawBoardPane(){
+  if(pane === 'note') renderNotes(); else renderBoard();
+}
+
+/* The + that adds one more note of a kind, in that kind's own paper colour.
+   Both boards draw it. */
+function addBtn(base){
+  return '<button class="add-btn" aria-label="추가"' +
+    (base ? ' style="color:#' + escapeAttr(colorSlot(base)) + ';"' : '') +
+    ' onclick="addNote(' + JSON.stringify(base).replace(/"/g, '&quot;') + ')">' +
+    PLUS_SVG + '</button>';
+}
+
+/* The note page: one run of notes of one name, and nothing else. No tiers to
+   walk, no homework, no week's notes, no way into the month as text — the
+   things a month needs and a scratch pad does not. */
+function renderNotes(){
+  const stack = document.getElementById('noteStack');
+  if(!stack) return;
+  applyView();
+  const ns = notesOf(MEMO);
+  let html = '<div class="pi-row">';
+  if(!ns.length) html += addBtn(MEMO_NAME);
+  /* The + rides on the last note, as it does on the board. */
+  else ns.forEach((note, i) =>
+    { html += pinHtml(note, i === ns.length - 1 ? MEMO_NAME : ''); });
+  stack.innerHTML = html + '</div>';
+}
 
 function renderBoard(){
   const mm = viewMonth;
@@ -2673,12 +2878,6 @@ function renderBoard(){
      that there is between two notes, and a board is one wall of paper, not a
      list of headings. The colour is what says which tier it adds to now that
      it no longer sits under one. */
-  const addBtn = base =>
-    '<button class="add-btn" aria-label="추가"' +
-      (base ? ' style="color:#' + escapeAttr(colorSlot(base)) + ';"' : '') +
-      ' onclick="addNote(' + JSON.stringify(base).replace(/"/g, '&quot;') + ')">' +
-      PLUS_SVG + '</button>';
-
   /* Which note of each kind is the last one written. That note carries the +
      that adds the next, in its own bottom left corner — so the + is always
      against the paper it extends rather than adrift at the end of a row.
@@ -2742,6 +2941,31 @@ function renderBoard(){
   stack.innerHTML = html;
 }
 
+/* Whether a week has anything to say for itself: something said in its 쀼톡,
+   or anything written on any of its days — an errand, a challenge, a line of
+   diary, one of the three activities, or a figure spent. A week with none of
+   that is a week nobody was keeping, and it gets no card. */
+function weekHasAny(key){
+  if(!talkEmpty(talkOf(key))) return true;
+  return weekDays(key).some(code => {
+    const s = sharedOf(code);
+    if(s.sched.length || s.chal.length || s.diary.length) return true;
+    if(DAY_MARKS.some(m => markDone(s, m.key))) return true;
+    return !cashEmpty(cashOf(code));
+  });
+}
+
+/* The week's errands, run together on one line. Not clipped: this is the
+   month being read back, and the point of reading it back is the detail. */
+function weekSchedHtml(key){
+  const out = [];
+  weekDays(key).forEach(code =>
+    sharedOf(code).sched.forEach(t => out.push(stripMd(t))));
+  return out.length
+    ? '<div class="tally-sched">' + withFaces(escapeHtml(out.join(' / '))) + '</div>'
+    : '';
+}
+
 /* The month's 쀼톡, under the board. The same thing the week column opens —
    the marks, the week's spending, and what was said — but read rather than
    pressed: the board is where the month is looked back on, and having to
@@ -2761,14 +2985,18 @@ function monthTalksHtml(mm){
     const k = weekKey(mm + pad2(d));
     if(keys.indexOf(k) === -1) keys.push(k);
   }
-  const cards = keys.filter(k => !talkEmpty(talkOf(k))).map(k => {
+  /* Every week that has begun, not only the ones somebody wrote a 쀼톡 for:
+     a week with a swim in it and nothing said is still a week that happened.
+     A week still ahead is not shown — there is nothing in it yet. */
+  const today = todayCode();
+  const cards = keys.filter(k => k <= today && weekHasAny(k)).map(k => {
     const t = talkOf(k);
     return '<div class="talk-card">' +
       '<button class="talk-head" onclick="openTalk(\'' + k + '\')">' +
         '<img class="talk-mark" src="' + TALK_ICON + '" alt="쀼톡">' +
         '<span>' + escapeHtml(talkTitle(k)) + '</span>' +
       '</button>' +
-      weekTallyHtml(k) + weekCashHtml(k) +
+      weekTallyHtml(k) + weekSchedHtml(k) + weekCashHtml(k) +
       TALK_SECTIONS.filter(s => t[s.key].length).map(s =>
         '<span class="talk-part">' +
           t[s.key].map(x => '<span>' + mdToHtml(x) + '</span>').join('<br>') +
@@ -2950,18 +3178,18 @@ async function setDue(code){
 let noteEditId = null;
 
 function openNote(id){
-  const note = notesOf(viewMonth).find(n => n.id === id);
+  const note = notesOf(boardKey()).find(n => n.id === id);
   if(!note || isHomework(note.name)) return;
   noteEditId = id;
-  renderBoard();
-  const box = document.querySelector('#boardStack .pi-edit');
+  redrawBoardPane();
+  const box = document.querySelector('.board-stack .pi-edit');
   if(box){ box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
 }
 
 /* A new note appears straight away, already open to be written on. Left
    empty, it is taken away again when it closes. */
 async function addNote(base){
-  const mm = viewMonth;
+  const mm = boardKey();
   if(!Array.isArray(board[mm])) board[mm] = [];
   const note = {id: uid(), name: nextName(mm, base), color: '', lines: []};
   board[mm].push(note);
@@ -2972,7 +3200,7 @@ async function addNote(base){
 /* Typed into, the note is kept as it is typed — but the board is NOT redrawn,
    or the caret would jump back to the start on every letter. */
 async function noteTyping(el, id){
-  const note = notesOf(viewMonth).find(n => n.id === id);
+  const note = notesOf(boardKey()).find(n => n.id === id);
   if(!note) return;
   note.lines = parseLines(el.value);
   saveBoard().catch(() => {});
@@ -2982,15 +3210,15 @@ async function noteTyping(el, id){
    a colour of its own rather than being painted the default, so a later
    change in Options reaches it again. */
 async function noteColorReset(id){
-  const note = notesOf(viewMonth).find(n => n.id === id);
+  const note = notesOf(boardKey()).find(n => n.id === id);
   if(!note) return;
   note.color = '';
-  renderBoard();
+  redrawBoardPane();
   saveBoard().catch(() => {});
 }
 
 async function noteColorPick(el, id){
-  const note = notesOf(viewMonth).find(n => n.id === id);
+  const note = notesOf(boardKey()).find(n => n.id === id);
   if(!note) return;
   note.color = el.value.replace('#', '');
   const paper = el.closest('.pi');
@@ -3004,14 +3232,14 @@ async function closeNote(){
   const id = noteEditId;
   noteEditId = null;
   if(id){
-    const mm = viewMonth;
+    const mm = boardKey();
     const at = (board[mm] || []).findIndex(n => n.id === id);
     if(at !== -1 && !board[mm][at].lines.length){
       board[mm].splice(at, 1);
       saveBoard().catch(() => {});
     }
   }
-  renderBoard();
+  redrawBoardPane();
 }
 
 function noteEditKey(ev){
@@ -3035,12 +3263,12 @@ document.addEventListener('pointerdown', e => {
 
 async function deleteNoteNow(el, id){
   if(!armed(el, '한 번 더 누르면 지웁니다')) return;
-  const mm = viewMonth;
+  const mm = boardKey();
   const at = (board[mm] || []).findIndex(n => n.id === id);
   if(at === -1) return;
   board[mm].splice(at, 1);
   noteEditId = null;
-  renderBoard();
+  redrawBoardPane();
   saveBoard().catch(() => {});
 }
 
@@ -3053,7 +3281,7 @@ function openBoardText(){
     '<p class="modal-title">' + escapeHtml(monthTitle()) + '</p>' +
     '<textarea id="noteText" rows="14" spellcheck="false"' +
       ' style="font-size:var(--fs-label);">' +
-      escapeHtml(boardToEditText(viewMonth)) + '</textarea>' +
+      escapeHtml(boardToEditText(boardKey())) + '</textarea>' +
     '<p class="hint" style="margin-top:var(--sp-2);">' +
       '<code>-</code>로 시작하면 작은 줄. 포스트잇 색은 포스트잇을 눌러서 고칩니다.</p>' +
     '<div class="actions" style="margin-top:var(--sp-3);">' +
@@ -3071,7 +3299,7 @@ function hideNote(){ document.getElementById('noteOverlay').classList.remove('sh
 /* Replacing a whole month asks twice. */
 async function saveNoteText(el){
   const text = document.getElementById('noteText').value;
-  const mm = viewMonth;
+  const mm = boardKey();
   if(!Array.isArray(board[mm])) board[mm] = [];
   if(board[mm].length && !armed(el, '한 번 더 누르면 이 달을 덮어씁니다')) return;
   // A month rewritten as text keeps the colours its notes already had.
@@ -3080,7 +3308,7 @@ async function saveNoteText(el){
   const parsed = parseBoardText(text);
   parsed.forEach(n => { if(old[n.name]) n.color = old[n.name]; });
   board[mm] = parsed;
-  hideNote(); renderBoard();
+  hideNote(); redrawBoardPane();
   saveBoard().catch(() => {});
 }
 
@@ -3517,8 +3745,9 @@ function renderCalendar(){
     const hol = holiOf(code);
 
     html += '<button class="cal-cell' + (weekend ? ' weekend' : '') +
+              (holiEmpty(hol) ? '' : ' holiday') +
               (code === today ? ' today' : '') +
-              (code === shownDay() ? ' picked' : '') + '"' +
+              (code === shownDay() && !wallpaper ? ' picked' : '') + '"' +
               ' onclick="pickDay(\'' + code + '\')">' +
               /* The figure itself carries it: red is a day Japan is off, and
                  the small square beside it a day Korea keeps. A name will not
@@ -3526,9 +3755,15 @@ function renderCalendar(){
               '<span class="cal-head">' +
                 '<span class="cal-daynum' + (hol.jp ? ' hol-jp' : '') + '">' +
                   day + '</span>' +
-                (hol.kr ? '<i class="cal-kr"></i>' : '') +
+                /* Japan first and in red: it is the one that decides whether
+                   anyone is at work. */
+                (hol.jp ? '<span class="cal-hol jp">' + withFaces(escapeHtml(hol.jp)) + '</span>' : '') +
+                (hol.kr ? '<span class="cal-hol kr">' + withFaces(escapeHtml(hol.kr)) + '</span>' : '') +
               '</span>' +
-              sched + marks + written +
+              sched +
+              /* Pinned to the foot of the cell, and on one line. */
+              (marks || written
+                ? '<span class="cal-foot">' + marks + written + '</span>' : '') +
             '</button>';
 
     col++;
@@ -3903,7 +4138,7 @@ async function deleteTalk(el){
    back the same way: whatever the text names is replaced, whatever it leaves
    out is left alone.
    ----------------------------------------------------------------------- */
-let dataKinds = {review: true, talk: true, day: true, cash: true, holi: true};
+let dataKinds = {review: true, talk: true, day: true, cash: true, holi: true, note: true};
 
 function toggleKind(el, key){
   dataKinds[key] = !dataKinds[key];
@@ -4117,6 +4352,7 @@ function restoreCounts(p){
     .reduce((n, mm) => n + Object.keys(o[mm] || {}).length, 0);
   return {
     '쀼리뷰': Object.keys(p.board || {}).length,
+    '노트':   (p.memo || []).length,
     '쀼톡':   Object.keys(p.talks || {}).length,
     '쀼일':   Object.keys(p.shared || {}).length,
     '가계쀼': days(p.cash),
@@ -4158,6 +4394,14 @@ function applyParsed(p){
       Object.keys(p.cash[mm]).forEach(dd => { cash[mm + dd] = p.cash[mm][dd]; });
     });
     jobs.push(saveCash());
+  }
+  if(p.memo){
+    /* The colours a note already had are kept, the way a month's are. */
+    const old = {};
+    notesOf(MEMO).forEach(n => { old[n.name] = n.color; });
+    p.memo.forEach(n => { if(!n.color && old[n.name]) n.color = old[n.name]; });
+    board[MEMO] = p.memo;
+    jobs.push(saveBoard());
   }
   if(Object.keys(p.holi).length){
     Object.keys(p.holi).forEach(mm => {
@@ -4212,6 +4456,7 @@ async function restoreFromFile(el){
 function renderAll(){
   renderMonthLabel();
   renderBoard();
+  renderNotes();
   renderCalPane();
 }
 
