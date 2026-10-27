@@ -57,7 +57,7 @@
     /* Readable on the black page. A note is light paper, so it takes the
        app's own blue back — one name, two contexts, the same trick the popup
        uses for its whole palette. */
-    --link-blue:#7FB2FF;
+    --link-blue:#8FA8D4;
     /* The paper a note is on when it has not been given a colour of its own.
        The one value this file adds: nothing else in the three apps fills a box
        with a light grey, so there was nothing to reuse. */
@@ -273,11 +273,11 @@
   .board-stack.flow > .talk-list,
   .board-stack.flow > .board-foot{flex:0 0 100%; order:2;}
 
-  /* Up on a screen: the thing itself, and the switch back. Everything that
-     is for working ON the month rather than looking at it goes. The month
-     keeps its figure and its two arrows — a calendar on a wall that cannot
-     be stepped is a calendar of one month. */
-  body.wall .pane-dots,
+  /* Up on a screen: the thing itself, the switch back, and the three dots
+     that say which screen it is. Everything that is for working ON the month
+     rather than looking at it goes. The month keeps its figure and its two
+     arrows — a calendar on a wall that cannot be stepped is a calendar of
+     one month. */
   body.wall .pane-btn,
   body.wall .hw-block,
   body.wall .talk-list,
@@ -297,6 +297,28 @@
     position:fixed; top:var(--sp-3); left:var(--sp-3);
     margin:0; z-index:5;
   }
+  /* Which screen this is, kept on the wall. It is the one thing up there
+     that is not a control over the view — it says where you are among the
+     three — and without it a wall gives no way back to the other two but a
+     swipe nobody can see. Held at the top of the SCREEN beside the switches
+     rather than in the month row: on two of the three screens that row is
+     not drawn, and on the third it has been carried into the middle of the
+     page. Four pixels down of its own, so the 18px of dots stand level with
+     the 26px of button to their left. */
+  body.wall .pane-dots{
+    position:fixed; top:calc(var(--sp-3) + 4px); left:50%;
+    transform:translateX(-50%);
+    margin:0; z-index:5;
+  }
+  /* The row itself is gone on a wall, but it cannot be taken away outright:
+     the dots stand inside it, and nothing renders inside a parent that is
+     not drawn. So it keeps its place in the document and gives up its own
+     height and everything else it carries. */
+  .month-row.wall-bare{
+    margin:0; min-height:0; gap:0;
+  }
+  .month-row.wall-bare .month-nav,
+  .month-row.wall-bare .pane-btn{display:none;}
 
   /* The controls over each screen, top left. */
   .board-tools{
@@ -359,7 +381,7 @@
   .pi{
     /* A note is a set size, not whatever the screen is wide. One name, so
        the whole board resizes from here. */
-    --link-blue:#2519FF;
+    --link-blue:#2F4C86;
     width:calc(var(--pi-w) * var(--pi-z)); max-width:100%;
     flex:0 0 auto; text-align:center;
     /* Square at the smallest: the same measure down as across. A note with
@@ -680,13 +702,13 @@
      a gap between each, and the sheet's own padding top and bottom. */
   .tb-plan{
     min-height:calc(var(--fs-lead) + var(--fs-label) * 1.2 + var(--sp-4)
-                    + 30px * 3 + var(--sp-4) * 2 + var(--sp-4) * 2);
+                    + 30px * 3 + var(--sp-4) * 2 + var(--sp-3) * 2);
   }
   /* Left, with the day's figures in it: three sums and the total at
      line-height 1.5, the rule above the total with its space either side,
      and the sheet's own padding. */
   .tb-diary{
-    min-height:calc(var(--fs-label) * 1.5 * 4 + 5px + var(--sp-4) * 2);
+    min-height:calc(var(--fs-label) * 1.5 * 4 + 5px + var(--sp-3) * 2);
   }
   /* One sheet of the four. The four names are declared again here, the way the
      popup does it, so every rule inside simply follows: "ink" is black on this
@@ -696,9 +718,11 @@
     --ink:#111111;
     --text-muted:#6B6B6B;
     --line-b:#9A9A9A;
-    --link-blue:#2519FF;
+    --link-blue:#2F4C86;
     background:var(--paper); color:var(--ink);
-    padding:var(--sp-4) var(--sp-3);
+    /* The same measure all four ways. Sixteen down and twelve across read as
+       a sheet with a gap above its first line and none beside it. */
+    padding:var(--sp-3);
     text-align:left; min-width:0;
   }
   /* What is planned reads up the middle. */
@@ -1037,7 +1061,7 @@
     --ink:#111111;
     --text-muted:#6B6B6B;
     --line-b:#9A9A9A;
-    --link-blue:#2519FF;
+    --link-blue:#2F4C86;
     background:var(--paper); color:var(--ink);
     padding:var(--sp-4); text-align:left;
   }
@@ -1077,7 +1101,7 @@
      overridden just below. */
   .modal-box{
     --paper:#FFFFFF;
-    --link-blue:#2519FF;
+    --link-blue:#2F4C86;
     --ink:#111111;
     --text-dark:#111111;
     --text-muted:#6B6B6B;
@@ -1327,7 +1351,7 @@ if('serviceWorker' in navigator){
     </div>
   </div></div>
 
-  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-27r</p>
+  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-27s</p>
 </div></div>
 <script>
 /* =========================================================================
@@ -2784,7 +2808,7 @@ function applyView(){
      that cannot be stepped shows one month for ever — and the other two
      pages, which the month does not govern, do without it. */
   const mr = document.querySelector('.month-row');
-  if(mr) mr.style.display = (wallpaper && pane !== 'cal') ? 'none' : '';
+  if(mr) mr.classList.toggle('wall-bare', wallpaper && pane !== 'cal');
 }
 
 /* Left up on a screen all day, the board is a board and nothing else: the
@@ -2810,11 +2834,12 @@ function setZoom(z, keep){
 }
 
 /* Pressing the percentage steps down through the sizes and comes back round
-   to full. A trackpad has no pinch to offer the board, and before this the
-   only thing the button did was undo a gesture that could not be made. A
+   to the largest. A trackpad has no pinch to offer the board, and before this
+   the only thing the button did was undo a gesture that could not be made. A
    size set by fingers lands on the first step below it, so the button is
-   never a jump upward from wherever the board happens to be. */
-const Z_STEPS = [1, 0.75, 0.5];
+   never a jump upward from wherever the board happens to be — except off the
+   bottom, where there is nowhere to go but round. 100 → 75 → 50 → 125. */
+const Z_STEPS = [1.25, 1, 0.75, 0.5];
 function resetZoom(){
   const now = piZoom[zPane()];
   const i = Z_STEPS.findIndex(z => z < now - 0.005);
