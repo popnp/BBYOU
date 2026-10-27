@@ -1009,7 +1009,10 @@
   }
   .cal-hol.jp{color:var(--rust);}
   .cal-hol.kr{color:var(--text-muted);}
-  /* The ground under a day off — a holiday or either end of the weekend.
+  /* The ground under a day nobody is at work — a day Japan is off, or either
+     end of the weekend. A day Korea keeps and Japan does not is left alone:
+     these two work here, and a Korean holiday is something to remember rather
+     than a day away from the desk. Its name still prints, in grey.
      Deeper than the #2A2A2A it started at: with two columns of every week
      carrying it as well as the holidays, the lighter grey was most of the
      month and read as noise rather than as a mark. */
@@ -1423,7 +1426,7 @@ if('serviceWorker' in navigator){
     </div>
   </div></div>
 
-  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-27v</p>
+  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-27w</p>
 </div></div>
 <script>
 /* =========================================================================
@@ -3878,7 +3881,7 @@ function renderCalendar(){
     const hol = holiOf(code);
 
     html += '<button class="cal-cell' + (weekend ? ' weekend' : '') +
-              (holiEmpty(hol) ? '' : ' holiday') +
+              (hol.jp ? ' holiday' : '') +
               (code === today ? ' today' : '') +
               (code === shownDay() && !wallpaper ? ' picked' : '') + '"' +
               ' onclick="pickDay(\'' + code + '\')">' +
