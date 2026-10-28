@@ -19,7 +19,7 @@
 */
 
 /* Bump this on every release. Changing it is what retires the old cache. */
-const VERSION = '2026-10-27w';
+const VERSION = '2026-10-28a';
 const PREFIX = 'bbyu-';
 const CACHE = PREFIX + VERSION;
 
