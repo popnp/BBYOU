@@ -19,7 +19,7 @@
 */
 
 /* Bump this on every release. Changing it is what retires the old cache. */
-const VERSION = '2026-10-28a';
+const VERSION = '2026-10-30a';
 const PREFIX = 'bbyu-';
 const CACHE = PREFIX + VERSION;
 
@@ -28,7 +28,14 @@ const ASSETS = [
   './index.html',
   './bbyu.webmanifest',
   './icon-bbyu-192.png',
-  './icon-bbyu-512.png'
+  './icon-bbyu-512.png',
+  /* The second app in this folder. Its own page, its own manifest and its own
+     icons; it shares this worker and this cache, and nothing else — its
+     records go to Supabase under a code of their own. */
+  './plan.html',
+  './plan.webmanifest',
+  './icon-plan-192.png',
+  './icon-plan-512.png'
 ];
 
 self.addEventListener('install', event => {
@@ -72,7 +79,10 @@ self.addEventListener('fetch', event => {
       })
       .catch(() =>
         caches.match(req).then(hit =>
-          hit || caches.match('./index.html')
+          /* Each app falls back to its own page. One blanket fallback sent
+             somebody opening the second app with no signal to the first. */
+          hit || caches.match(url.pathname.indexOf('plan') !== -1
+                   ? './plan.html' : './index.html')
         )
       )
   );

@@ -1,0 +1,26 @@
+{
+  "name": "PLAN",
+  "short_name": "PLAN",
+  "description": "A month with the day's own record under it, and a wall of notes.",
+  "id": "/BBYOU/plan.html",
+  "start_url": "./plan.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
+  "icons": [
+    {
+      "src": "./icon-plan-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-plan-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
