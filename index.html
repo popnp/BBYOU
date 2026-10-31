@@ -413,6 +413,25 @@
   /* Two names deep: `.add-btn` carries the page's ink and is declared below
      this, so a single name here lost the cascade and the + came out white on
      the paper. */
+  /* The day it was written, in the corner the + does not use. It goes down
+     with the paper like everything else on it, but not below 8px — under
+     that it is a smudge rather than a date. */
+  .pi-date{
+    position:absolute; left:var(--sp-2); bottom:var(--sp-2);
+    font-family:var(--font-ui); font-weight:400;
+    font-size:max(8px, calc(var(--fs-label) * var(--pi-z) * 0.62));
+    line-height:1; color:#111; opacity:0.45;
+    pointer-events:none;
+  }
+  .pi.editing .pi-date{opacity:0.3;}
+  .arch-empty{
+    font-family:var(--font-ui); font-size:var(--fs-label);
+    color:var(--ink-dim, var(--ink)); opacity:0.6; text-align:center;
+    margin:var(--sp-5) 0;
+  }
+  .tool-n{font-family:var(--font-ui); font-size:11px; line-height:1;}
+  .board-tools .tool-btn{gap:var(--sp-1);}
+
   .pi .pi-add{
     position:absolute; right:var(--sp-2); bottom:var(--sp-2);
     color:#111;
@@ -1297,6 +1316,7 @@ if('serviceWorker' in navigator){
     <button class="tool-btn js-layout" onclick="toggleFlow()" aria-label="배치"></button>
     <button class="tool-btn js-zoom" onclick="resetZoom()" aria-label="포스트잇 크기">100%</button>
     <button class="tool-btn js-wall" onclick="toggleWall()" aria-label="바탕화면 모드"></button>
+    <button class="tool-btn js-arch" onclick="noteToggleArch()" aria-label="보관함"></button>
   </div>
   <div class="board-stack" id="noteStack"></div>
 </section>
@@ -1433,7 +1453,7 @@ if('serviceWorker' in navigator){
     </div>
   </div></div>
 
-  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-30a</p>
+  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-31a</p>
 </div></div>
 <script>
 /* =========================================================================
@@ -1733,6 +1753,14 @@ function cloudStatus(ok){
    its effect is read twice. */
 /* Corners pushed out, then pulled back in: the way every screen says "this
    and nothing else" and then says it the other way round. */
+/* The box things are put away in: a lid across the top, a body under it and
+   the slot you lift it by. Square, like the switches beside it. */
+const ARCH_SVG =
+  '<svg viewBox="0 0 16 16" aria-hidden="true">' +
+  '<rect x="0.5" y="2" width="15" height="3.4" fill="currentColor"/>' +
+  '<path d="M2.2 6.6 H13.8 V14 H2.2 Z" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
+  '<rect x="6" y="9" width="4" height="1.6" fill="currentColor"/></svg>';
+
 const WALL_OUT_SVG =
   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"' +
   ' stroke-linecap="square" aria-hidden="true">' +
@@ -2166,6 +2194,44 @@ const DEFAULT_COLORS = (() => {
 const hex6 = v => /^[0-9a-fA-F]{6}$/.test(String(v || '')) ? String(v).toUpperCase() : '';
 function colorSlot(key){ return hex6(colors[key]) || DEFAULT_COLORS[key] || ''; }
 function colorOf(note){ return note.color || colorSlot(baseName(note.name)) || ''; }
+
+/* When a note was written, or null if there is no saying.
+
+   Only what was written down. The to-do app can read the date out of a
+   note's id, because an id there is made once and kept; here a month rewritten
+   as text is parsed back into fresh notes with fresh ids, so an id would give
+   the day of the last edit and call it the day of writing. A wrong date is
+   worse than none, so notes made before this was kept simply have none. */
+const NOTE_T_MIN = Date.UTC(2020, 0, 1), NOTE_T_MAX = Date.UTC(2100, 0, 1);
+function noteMadeAt(note){
+  const t = Number((note || {}).created);
+  return (isFinite(t) && t > NOTE_T_MIN && t < NOTE_T_MAX) ? t : null;
+}
+
+/* '10.28'. The year is left off: the board is already a month, and the note
+   page is this year's. */
+function noteDateText(note){
+  const t = noteMadeAt(note);
+  if(t === null) return '';
+  const d = new Date(t);
+  return pad2(d.getMonth() + 1) + '.' + pad2(d.getDate());
+}
+
+/* 'YYYY-MM-DD', for the text form. Dashes rather than the six digits used
+   everywhere else, because six hex digits in brackets is already how a note
+   says what colour it is. */
+function noteDateISO(note){
+  const t = noteMadeAt(note);
+  if(t === null) return '';
+  const d = new Date(t);
+  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+}
+
+/* Put away, newest first. The note page only. */
+function archivedNotes(){
+  return notesOf(MEMO).filter(nt => nt.arch)
+         .sort((a, b) => (noteMadeAt(b) || 0) - (noteMadeAt(a) || 0));
+}
 /* The square a day's mark is drawn as, one per line of the day. */
 const markColor = key => colorSlot({out:'OutP', inp:'InP', ex:'Ex.'}[key]);
 
@@ -2260,6 +2326,15 @@ function parseBoardText(text){
     }
     const col = /^\(#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})\)$/.exec(line);
     if(col && !cur.lines.length){ cur.color = col[1].toLowerCase(); return; }
+    /* The day it was written, in dashes so it cannot be read as a colour,
+       and whether it has been put away. Both stand with the colour above the
+       writing; a file from before them simply has neither. */
+    const dt = /^\((\d{4})-(\d{2})-(\d{2})\)$/.exec(line);
+    if(dt && !cur.lines.length){
+      cur.created = new Date(+dt[1], +dt[2] - 1, +dt[3]).getTime();
+      return;
+    }
+    if(line === '(보관)' && !cur.lines.length){ cur.arch = true; return; }
     const l = parseLine(line);
     if(l) cur.lines.push(l);
   });
@@ -2434,6 +2509,8 @@ function parseMonthHead(arg, baseYY){
 function noteToFullText(note){
   return '[' + note.name + ']\n' +
     (note.color ? '(' + note.color.toUpperCase() + ')\n' : '') +
+    (noteDateISO(note) ? '(' + noteDateISO(note) + ')\n' : '') +
+    (note.arch ? '(보관)\n' : '') +
     note.lines.map(lineToText).join('\n');
 }
 function boardToFullText(mm){
@@ -2773,10 +2850,16 @@ function pinHtml(note, addBase){
         ' onclick="event.stopPropagation();addNote(' +
         JSON.stringify(addBase).replace(/"/g, '&quot;') + ')">' + PLUS_SVG + '</button>'
     : '';
+  /* The day it was written, in the one corner nothing else uses — the + has
+     the other. Small and faint: it is what the note is filed under, not part
+     of what it says. */
+  const when = noteDateText(note);
+  const date = when ? '<span class="pi-date">' + when + '</span>' : '';
   if(noteEditId !== note.id){
     return '<div class="pi pi-' + tierOf(note.name) +
       '" role="button" tabindex="0"' + bg +
-      ' onclick="notePress(event,\'' + note.id + '\')">' + noteBodyHtml(note) + add + '</div>';
+      ' onclick="notePress(event,\'' + note.id + '\')">' +
+      noteBodyHtml(note) + date + add + '</div>';
   }
   return '<div class="pi pi-' + tierOf(note.name) + ' editing"' + bg + '>' +
     '<textarea class="pi-edit" spellcheck="false"' +
@@ -2789,10 +2872,28 @@ function pinHtml(note, addBase){
         ' oninput="noteColorPick(this,\'' + note.id + '\')" aria-label="색">' +
       (paper ? '<button class="pi-tool" onclick="noteColorReset(\'' + note.id + '\')"' +
           ' aria-label="기본 색으로">기본</button>' : '') +
+      /* Only on the note page. A month's board is already filed by its
+         month — putting a note of October away would hide it from October,
+         which is the one place it is supposed to be. */
+      (note.name === MEMO_NAME
+        ? '<button class="pi-tool" onclick="noteArchToggle(\'' + note.id + '\')">' +
+            (note.arch ? '되돌리기' : '보관') + '</button>'
+        : '') +
       '<button class="pi-tool" onclick="deleteNoteNow(this,\'' + note.id + '\')">삭제</button>' +
       '<button class="pi-tool done" onclick="closeNote()" aria-label="완료">✓</button>' +
     '</div>' +
+    date +
   '</div>';
+}
+
+/* Into the box, or back out onto the page. */
+function noteArchToggle(id){
+  const note = notesOf(MEMO).find(nt => nt.id === id);
+  if(!note) return;
+  note.arch = !note.arch;
+  noteEditId = null;
+  renderNotes();
+  saveBoard().catch(() => {});
 }
 
 /* ---- the week, counted, at the head of its own 쀼톡 ---------------------
@@ -2887,6 +2988,14 @@ function applyView(){
   document.querySelectorAll('.js-wall').forEach(el => {
     el.innerHTML = wallpaper ? WALL_IN_SVG : WALL_OUT_SVG;
     el.classList.toggle('on', wallpaper);
+  });
+  /* The count stands beside the box, because whether the box is worth
+     opening is the only thing you want to know before opening it. */
+  document.querySelectorAll('.js-arch').forEach(el => {
+    const kept = notesOf(MEMO).filter(nt => nt.arch).length;
+    el.innerHTML = ARCH_SVG + (kept ? '<span class="tool-n">' + kept + '</span>' : '');
+    el.classList.toggle('on', noteArchView);
+    el.title = noteArchView ? '노트로 돌아가기' : '보관함 (' + kept + ')';
   });
   document.body.classList.toggle('wall', wallpaper);
   /* Off the wall there is nothing to hide, and the count starts again every
@@ -3004,13 +3113,31 @@ function renderNotes(){
   const stack = document.getElementById('noteStack');
   if(!stack) return;
   applyView();
-  const ns = notesOf(MEMO);
+  /* The box. No +: it is somewhere things are kept, not a page to add to,
+     and the only thing to do here is read one or take it back. */
+  if(noteArchView){
+    const kept = archivedNotes();
+    stack.innerHTML = kept.length
+      ? '<div class="pi-row">' + kept.map(nt => pinHtml(nt, '')).join('') + '</div>'
+      : '<p class="arch-empty">보관한 포스트잇이 없습니다.</p>';
+    return;
+  }
+  const ns = notesOf(MEMO).filter(nt => !nt.arch);
   let html = '<div class="pi-row">';
   if(!ns.length) html += addBtn(MEMO_NAME);
   /* The + rides on the last note, as it does on the board. */
   else ns.forEach((note, i) =>
     { html += pinHtml(note, i === ns.length - 1 ? MEMO_NAME : ''); });
   stack.innerHTML = html + '</div>';
+}
+
+/* The box is a drawer, not a mode: it is not remembered across a reload, and
+   leaving it is the same press that opened it. */
+let noteArchView = false;
+function noteToggleArch(){
+  noteArchView = !noteArchView;
+  noteEditId = null;
+  renderNotes();
 }
 
 function renderBoard(){
@@ -3343,7 +3470,8 @@ function openNote(id){
 async function addNote(base){
   const mm = boardKey();
   if(!Array.isArray(board[mm])) board[mm] = [];
-  const note = {id: uid(), name: nextName(mm, base), color: '', lines: []};
+  const note = {id: uid(), name: nextName(mm, base), color: '',
+                created: Date.now(), arch: false, lines: []};
   board[mm].push(note);
   openNote(note.id);
   saveBoard().catch(() => {});
@@ -3454,11 +3582,17 @@ async function saveNoteText(el){
   const mm = boardKey();
   if(!Array.isArray(board[mm])) board[mm] = [];
   if(board[mm].length && !armed(el, '한 번 더 누르면 이 달을 덮어씁니다')) return;
-  // A month rewritten as text keeps the colours its notes already had.
+  /* A month rewritten as text keeps what the box does not show: the colour
+     its notes already had, and the day each was written. */
   const old = {};
-  board[mm].forEach(n => { old[n.name] = n.color; });
+  board[mm].forEach(n => { old[n.name] = n; });
   const parsed = parseBoardText(text);
-  parsed.forEach(n => { if(old[n.name]) n.color = old[n.name]; });
+  parsed.forEach(n => {
+    const was = old[n.name];
+    if(!was) return;
+    if(was.color) n.color = was.color;
+    if(n.created == null && was.created != null) n.created = was.created;
+  });
   board[mm] = parsed;
   hideNote(); redrawBoardPane();
   saveBoard().catch(() => {});
