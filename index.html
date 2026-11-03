@@ -651,6 +651,88 @@
      what :disabled looks like everywhere else in all three apps. */
   .todo-row.is-done .todo-text{text-decoration:line-through;}
   .hw-row{display:flex; justify-content:flex-end;}
+  /* ---- the month's notes, under one person's list -------------------- */
+  /* A row of them, wrapping, with the + at the far end of the last line —
+     the same place the homework keeps its own. */
+  .pn-row{
+    display:flex; flex-wrap:wrap; align-items:center;
+    gap:var(--sp-2); margin-top:var(--sp-2);
+  }
+  .pn-row:empty{display:none;}
+  /* A page, not a sheet of paper: taller than it is wide, so it is told
+     apart from the post-its above at a glance. 78px is three quarters of the
+     104 it started at, which puts four across a phone; the height follows the
+     width so the shape holds everywhere. */
+  .pn-card{
+    width:78px; aspect-ratio:3 / 4;
+    flex:0 0 auto;
+    display:flex; flex-direction:column; align-items:stretch;
+    padding:5px; box-sizing:border-box;
+    background:none; color:var(--ink);
+    border:1px solid var(--line-b); border-radius:0;
+    cursor:pointer; text-align:left; overflow:hidden;
+  }
+  /* A note that has been written is a piece of paper — white, solid, no
+     line drawn round it. The board behind is black, so the paper is the
+     whole of the shape and nothing else has to say where it ends. */
+  .pn-card.is-paper{background:#FFFFFF; color:#111111; border:none;}
+  .pn-card.is-paper .md-link, .pn-card.is-paper a{color:#2F4C86;}
+  /* The title at the top, two lines at most and bold; under it as much of
+     the writing as the card has room for, cut wherever it runs out. */
+  .pn-title{
+    flex:0 0 auto;
+    font-family:var(--font-ui); font-size:11px; font-weight:600;
+    line-height:1.25; overflow-wrap:anywhere;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+  .pn-peek{
+    flex:1 1 auto; min-height:0; margin-top:3px;
+    font-family:var(--font-ui); font-size:10px; font-weight:400;
+    line-height:1.3; overflow-wrap:anywhere; overflow:hidden;
+    opacity:0.72;
+  }
+  .pn-untitled{opacity:0.45;}
+  /* The one that is not a note yet keeps the outline, and nothing to read. */
+  .pn-add{
+    border-style:dashed; color:var(--text-muted);
+    align-items:center; justify-content:center;
+  }
+  .pn-add svg{width:18px; height:18px; fill:currentColor;}
+  .pn-add:hover{color:var(--ink);}
+  /* ---- and the same note, opened ------------------------------------- */
+  .pn-head{margin:0 0 var(--sp-3);}
+  .pn-read{
+    display:block; width:100%; text-align:left;
+    background:none; border:none; border-radius:0; padding:0;
+    color:var(--ink); cursor:pointer;
+  }
+  .pn-line{font-family:var(--font-ui); font-size:var(--fs-label); line-height:1.5;}
+  .pn-small{
+    font-family:var(--font-ui); font-size:var(--fs-abbr, 13px);
+    line-height:1.5; color:var(--text-muted);
+  }
+  .pn-gap{height:var(--sp-3);}
+  /* ---- the four marks, in Options ----------------------------------- */
+  .md-guide{display:flex; flex-direction:column; gap:var(--sp-2);}
+  .md-g{display:flex; align-items:baseline; gap:var(--sp-3);}
+  .md-g code{
+    flex:0 0 46%;
+    font-family:ui-monospace, Menlo, Consolas, monospace;
+    font-size:var(--fs-abbr, 13px); color:var(--text-muted);
+  }
+  .md-g-eg{font-family:var(--font-ui); font-size:var(--fs-label); color:var(--ink);}
+  .panel-inner code{
+    font-family:ui-monospace, Menlo, Consolas, monospace;
+    font-size:0.92em;
+  }
+  .pn-color{
+    width:26px; height:26px; flex:0 0 auto;
+    padding:0; border:0.5px solid rgba(0,0,0,0.35); border-radius:0;
+    background:none; cursor:pointer; -webkit-appearance:none; appearance:none;
+  }
+  .pn-color::-webkit-color-swatch-wrapper{padding:0;}
+  .pn-color::-webkit-color-swatch{border:none;}
   /* The blank at the foot of a list: the same box as the one a line opens
      into, so adding and correcting look alike. The name inside is quiet —
      it is a label, not something anyone wrote. */
@@ -1345,6 +1427,8 @@ if('serviceWorker' in navigator){
 <div id="noteOverlay" class="modal-overlay"><div id="noteBox" class="modal-box"></div></div>
 <div id="talkOverlay" class="modal-overlay"><div id="talkBox" class="modal-box"></div></div>
 <div id="dueOverlay" class="modal-overlay"><div id="dueBox" class="modal-box"></div></div>
+<!-- One of the month's notes, opened from the card under somebody's homework. -->
+<div id="pnOverlay" class="modal-overlay"><div id="pnBox" class="modal-box"></div></div>
 <div id="holiOverlay" class="modal-overlay"><div id="holiBox" class="modal-box">
   <div class="card-panel"><div class="panel-inner">
     <label class="field-label">공휴일 추가</label>
@@ -1405,6 +1489,22 @@ if('serviceWorker' in navigator){
 
   <div class="divider-bleed"></div>
 
+  <!-- The marks are the same in every box in this app, so they are written
+       out once, here, rather than hinted at beside each one. -->
+  <div class="card-panel"><div class="panel-inner">
+    <label class="field-label">글자 꾸미기</label>
+    <p class="hint" style="margin-bottom:var(--sp-3);">포스트잇, 노트, 숙제, 쀼톡, 하루 기록 — 글을 쓰는 곳이면 어디서나 같습니다. 아래 네 가지뿐입니다.</p>
+    <div class="md-guide">
+      <div class="md-g"><code>**굵게**</code><span class="md-g-eg"><strong>굵게</strong></span></div>
+      <div class="md-g"><code>_밑줄_</code><span class="md-g-eg"><u>밑줄</u></span></div>
+      <div class="md-g"><code>~~취소~~</code><span class="md-g-eg"><s>취소</s></span></div>
+      <div class="md-g"><code>[이름](https://…)</code><span class="md-g-eg"><a href="#" onclick="return false;">이름</a></span></div>
+    </div>
+    <p class="hint" style="margin-top:var(--sp-3);">줄 맨 앞의 <code>-</code> 는 작은 글씨, <code>→</code> 는 소제목입니다. <code>#</code> 제목, 목록, 인용, 표 같은 다른 마크다운 기호는 쓰지 않습니다 — 그대로 글자로 남습니다.</p>
+  </div></div>
+
+  <div class="divider-bleed"></div>
+
   <div class="card-panel"><div class="panel-inner">
     <label class="field-label">데이터 수정</label>
     <p class="hint" style="margin-bottom:var(--sp-3);">보고 싶은 것만 골라 꺼낸 다음, 글로 고쳐서 넣습니다. 넣은 글 안에 있는 것만 바뀌고 나머지는 그대로 있습니다.</p>
@@ -1453,7 +1553,7 @@ if('serviceWorker' in navigator){
     </div>
   </div></div>
 
-  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-10-31a</p>
+  <p class="hint" id="buildLabel" style="text-align:center;">Build 2026-11-03b</p>
 </div></div>
 <script>
 /* =========================================================================
@@ -2283,6 +2383,19 @@ const PLUS_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true">' +
 /* The bracket name with its trailing number taken off, which is what says
    whether a note is the motto, an agenda or the task list. */
 function baseName(name){ return String(name || '').replace(/\s*\d+\s*$/, '').trim(); }
+
+/* A note of the month that belongs to one of the two of them, written under
+   their own homework rather than standing on the board as a sheet of paper.
+
+   One line in the text form says both things at once — that it is a note and
+   whose it is — because they are the same fact: a note with nobody's name on
+   it has nowhere to be drawn. The name is whatever the homework block calls
+   that person, so the two always agree. */
+const RE_NOTE_WHO = /^\(\s*노트\s*[:：]\s*(.+?)\s*\)$/;
+function isPersonNote(note){ return !!(note && note.who); }
+function personNotes(mm, who){
+  return notesOf(mm).filter(nt => nt.who === who);
+}
 function tierOf(name){ return TIER_NAMES[baseName(name)] || 2; }
 function isHomework(name){ return baseName(name) === HW_NAME; }
 
@@ -2326,6 +2439,11 @@ function parseBoardText(text){
     }
     const col = /^\(#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})\)$/.exec(line);
     if(col && !cur.lines.length){ cur.color = col[1].toLowerCase(); return; }
+    /* Whose note this is, written above the words like the colour is. A file
+       from before this simply has none, and every note in it stands on the
+       board as it always did. */
+    const whoM = RE_NOTE_WHO.exec(line);
+    if(whoM && !cur.lines.length){ cur.who = whoM[1]; return; }
     /* The day it was written, in dashes so it cannot be read as a colour,
        and whether it has been put away. Both stand with the colour above the
        writing; a file from before them simply has neither. */
@@ -2410,6 +2528,18 @@ function mdEmphasis(s){
     .replace(/~~([^~]+)~~/g, '<s>$1</s>');
 }
 
+/* The same words with the marks taken off rather than acted on — for the
+   places too small to draw them, where `**필요 서류**` would otherwise be
+   read as four stray stars rather than as two bold words. */
+function mdPlain(raw){
+  return String(raw == null ? '' : raw)
+    .replace(RE_LINK, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(RE_U1, '$1$2')
+    .replace(/~~([^~]+)~~/g, '$1');
+}
+
 function mdToHtml(raw){
   let s = escapeHtml(raw);
   /* The links come out first and go back in last. Left in place, the marks
@@ -2469,7 +2599,8 @@ function linesToText(note){ return note.lines.map(lineToText).join('\n'); }
 function boardToEditText(mm){
   const ns = sortedNotes(mm);
   return ns.length
-    ? ns.map(n => '[' + n.name + ']\n' + linesToText(n)).join('\n\n')
+    ? ns.map(n => '[' + n.name + ']\n' +
+        (n.who ? '(노트:' + n.who + ')\n' : '') + linesToText(n)).join('\n\n')
     : BLANK_FORM;
 }
 
@@ -2508,6 +2639,7 @@ function parseMonthHead(arg, baseYY){
 
 function noteToFullText(note){
   return '[' + note.name + ']\n' +
+    (note.who ? '(노트:' + note.who + ')\n' : '') +
     (note.color ? '(' + note.color.toUpperCase() + ')\n' : '') +
     (noteDateISO(note) ? '(' + noteDateISO(note) + ')\n' : '') +
     (note.arch ? '(보관)\n' : '') +
@@ -2833,8 +2965,185 @@ function homeworkHtml(note){
       '<div class="hw-row"><button class="hw-add" aria-label="추가"' +
         ' onclick="addHomework(\'' + id + '\',' +
         JSON.stringify(g.who).replace(/"/g, '&quot;') + ')">' + PLUS_SVG + '</button></div>' +
+      personNotesHtml(g.who) +
     '</div>';
   }).join('') + '</div>';
+}
+
+/* The notes under one person's list. Each is a card the size of a page
+   rather than a sheet of paper — the board above is already paper, and
+   these are a different kind of thing: something written at length and read
+   when wanted, not something read at a glance. So the card carries the
+   title and nothing else, and the words are in the popup behind it. */
+function personNotesHtml(who){
+  if(!who) return '';
+  const ns = personNotes(boardKey(), who);
+  const safeWho = JSON.stringify(who).replace(/"/g, '&quot;');
+  return '<div class="pn-row">' +
+    ns.map(nt => {
+      const paper = nt.color
+        ? ' style="background:#' + escapeAttr(nt.color) +
+          '; border-color:#' + escapeAttr(nt.color) + '; color:#111;"'
+        : '';
+      const title = nt.name ? withFaces(escapeHtml(nt.name)) : '<span class="pn-untitled">제목 없음</span>';
+      /* The words themselves under the title, as far as the card goes. A
+         card showing only a title says no more than a list would; the point
+         of a page is that you can see what is written on it. */
+      const body = mdPlain((nt.lines || []).map(l => l.t).filter(Boolean).join(' '));
+      return '<button class="pn-card is-paper"' + paper +
+        ' onclick="openPersonNote(\'' + nt.id + '\')"' +
+        ' title="' + escapeAttr(nt.name || '') + '">' +
+        '<span class="pn-title">' + title + '</span>' +
+        (body ? '<span class="pn-peek">' + withFaces(escapeHtml(body)) + '</span>' : '') +
+      '</button>';
+    }).join('') +
+    /* The + is drawn as one of the cards rather than as a bare mark: under a
+       list that already ends in a + of its own, two of the same mark one
+       above the other say nothing about which makes what. Shaped like what
+       it makes, it needs no label. */
+    '<button class="pn-card pn-add" aria-label="노트 추가" title="노트 추가"' +
+      ' onclick="addPersonNote(' + safeWho + ')">' + PLUS_SVG + '</button>' +
+  '</div>';
+}
+
+/* ---- one note, opened ------------------------------------------------
+   Pressing the card reads it; pressing the words opens them for writing,
+   which is the same gesture a post-it answers to. A new one opens straight
+   into writing, there being nothing yet to read. */
+let pnOpenId = null;
+let pnEditing = false;
+
+function addPersonNote(who){
+  const mm = boardKey();
+  if(!Array.isArray(board[mm])) board[mm] = [];
+  const note = {id: uid(), name: '', color: '', who: who, lines: []};
+  board[mm].push(note);
+  openPersonNote(note.id, true);
+  saveBoard().catch(() => {});
+}
+
+function pnFind(id){
+  return notesOf(boardKey()).find(nt => nt.id === id) || null;
+}
+
+function openPersonNote(id, editing){
+  pnOpenId = id;
+  pnEditing = !!editing;
+  renderPersonNote();
+  document.getElementById('pnOverlay').classList.add('show');
+  if(pnEditing){
+    const t = document.getElementById('pnTitle');
+    if(t) t.focus();
+  }
+}
+
+function renderPersonNote(){
+  const box = document.getElementById('pnBox');
+  const nt = pnFind(pnOpenId);
+  if(!box) return;
+  if(!nt){ closePersonNote(); return; }
+  const body = linesToText(nt);
+  box.innerHTML = pnEditing
+    ? '<div class="card-panel"><div class="panel-inner">' +
+        '<label class="field-label">제목</label>' +
+        '<input type="text" id="pnTitle" value="' + escapeAttr(nt.name) + '"' +
+          ' oninput="pnTyping()" style="font-size:var(--fs-label);">' +
+        '<label class="field-label" style="margin-top:var(--sp-3);">내용</label>' +
+        '<textarea id="pnBody" rows="12" spellcheck="false"' +
+          ' oninput="pnTyping()" style="font-size:var(--fs-label);">' +
+          escapeHtml(body) + '</textarea>' +
+        '<div class="actions" style="margin-top:var(--sp-3);">' +
+          '<input type="color" class="pn-color" value="#' + escapeAttr(nt.color || 'FFFFFF') + '"' +
+            ' oninput="pnColorPick(this)" aria-label="색">' +
+          (nt.color ? '<button class="btn btn-ghost" onclick="pnColorReset()">기본</button>' : '') +
+          '<span style="flex:1;"></span>' +
+          '<button class="btn btn-danger" onclick="pnDelete(this)">삭제</button>' +
+          '<button class="btn btn-primary" onclick="pnDone()">완료</button>' +
+        '</div>' +
+      '</div></div>'
+    : '<div class="card-panel"><div class="panel-inner">' +
+        '<p class="modal-title pn-head">' +
+          (nt.name ? withFaces(escapeHtml(nt.name)) : '제목 없음') + '</p>' +
+        '<button class="pn-read" onclick="pnEdit()">' +
+          (body.trim() ? pnBodyHtml(nt)
+                       : '<span class="hint">비어 있습니다. 눌러서 쓰세요.</span>') +
+        '</button>' +
+        '<div class="actions" style="margin-top:var(--sp-4);">' +
+          '<button class="btn btn-ghost" onclick="pnEdit()">고쳐 쓰기</button>' +
+          '<span style="flex:1;"></span>' +
+          '<button class="btn btn-ghost" onclick="closePersonNote()">닫기</button>' +
+        '</div>' +
+      '</div></div>';
+}
+
+/* The words, line by line, in the same two sizes every note in this app is
+   written in: a line opening with `-` is the small type under the big. The
+   marks inside a line — **bold**, _underline_, [links] — are the board's
+   own, so a note reads the way a post-it does, only longer. */
+function pnBodyHtml(note){
+  return (note.lines || []).map(l =>
+    l.t ? '<div class="' + (l.s ? 'pn-small' : 'pn-line') + '">' + mdToHtml(l.t) + '</div>'
+        : '<div class="pn-gap"></div>'
+  ).join('');
+}
+
+function pnEdit(){ pnEditing = true; renderPersonNote();
+  const t = document.getElementById('pnBody'); if(t) t.focus(); }
+
+/* Kept as it is typed, like a post-it — the board behind redraws so the card
+   shows the new title straight away, but this box is left alone. */
+function pnTyping(){
+  const nt = pnFind(pnOpenId);
+  if(!nt) return;
+  const t = document.getElementById('pnTitle');
+  const b = document.getElementById('pnBody');
+  if(t) nt.name = t.value.trim();
+  if(b) nt.lines = parseLines(b.value);
+  redrawBoardPane();
+  saveBoard().catch(() => {});
+}
+
+function pnColorPick(el){
+  const nt = pnFind(pnOpenId);
+  if(!nt) return;
+  nt.color = String(el.value || '').replace('#', '').toLowerCase();
+  redrawBoardPane();
+  saveBoard().catch(() => {});
+}
+
+function pnColorReset(){
+  const nt = pnFind(pnOpenId);
+  if(!nt) return;
+  nt.color = '';
+  renderPersonNote();
+  redrawBoardPane();
+  saveBoard().catch(() => {});
+}
+
+function pnDone(){ pnEditing = false; renderPersonNote(); }
+
+function pnDelete(el){
+  if(!armed(el, '한 번 더 누르면 지웁니다')) return;
+  const mm = boardKey();
+  board[mm] = notesOf(mm).filter(nt => nt.id !== pnOpenId);
+  closePersonNote();
+  redrawBoardPane();
+  saveBoard().catch(() => {});
+}
+
+/* Nothing written and no title: it was never a note. Taken away rather than
+   left as a blank card nobody meant to make — the rule the post-its use. */
+function closePersonNote(){
+  const nt = pnFind(pnOpenId);
+  if(nt && !nt.name && !linesToText(nt).trim()){
+    const mm = boardKey();
+    board[mm] = notesOf(mm).filter(x => x.id !== nt.id);
+    saveBoard().catch(() => {});
+  }
+  pnOpenId = null;
+  pnEditing = false;
+  document.getElementById('pnOverlay').classList.remove('show');
+  redrawBoardPane();
 }
 
 /* One note: what is written on it, or — while it is open — the text itself
@@ -3142,7 +3451,11 @@ function noteToggleArch(){
 
 function renderBoard(){
   const mm = viewMonth;
-  const notes = sortedNotes(mm);
+  /* Everything the board draws as paper. A note belonging to one of them is
+     drawn under their own homework instead, so it is left out HERE and not
+     in sortedNotes — that one feeds the backup and the month's text editor
+     too, and a note missing from those is a note thrown away. */
+  const notes = sortedNotes(mm).filter(nt => !isPersonNote(nt));
   const stack = document.getElementById('boardStack');
   applyView();
 
@@ -3583,7 +3896,10 @@ async function saveNoteText(el){
   if(!Array.isArray(board[mm])) board[mm] = [];
   if(board[mm].length && !armed(el, '한 번 더 누르면 이 달을 덮어씁니다')) return;
   /* A month rewritten as text keeps what the box does not show: the colour
-     its notes already had, and the day each was written. */
+     its notes already had, and the day each was written. Whose a note is IS
+     shown in the box, so it is taken from what was typed there and nothing
+     is carried over — that line is how a note is moved from one of them to
+     the other, or off the homework and back onto the board. */
   const old = {};
   board[mm].forEach(n => { old[n.name] = n; });
   const parsed = parseBoardText(text);
